@@ -14,11 +14,11 @@
   --accent-gold-light: #ffd54f;
   --saffron: #ff5722;
   --bg-dark: #060913;
-  --sidebar-bg: rgba(10, 14, 26, 0.45);
+  --sidebar-bg: rgba(10, 14, 26, 0.75);
   --chat-bg: #090d1a;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --glass: rgba(15, 23, 42, 0.35);
+  --glass: rgba(15, 23, 42, 0.75);
   --glass-hover: rgba(255, 255, 255, 0.07);
   --glass-border: rgba(255, 255, 255, 0.07);
   --font-main: 'Outfit', sans-serif;
@@ -38,6 +38,7 @@ body {
   color: var(--text-main);
   font-family: var(--font-main);
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
 }
@@ -60,6 +61,7 @@ body {
 .app-container {
   display: flex;
   height: 100vh;
+  height: 100dvh;
   width: 100vw;
   position: relative;
   overflow: hidden;
@@ -322,13 +324,13 @@ body {
 }
 
 .bot-message {
-  background: rgba(255, 255, 255, 0.015);
+  background: rgba(15, 23, 42, 0.65);
   border: 1px solid rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(8px);
 }
 
 .user-message {
-  background: rgba(255, 179, 0, 0.005);
+  background: rgba(255, 179, 0, 0.035);
   border: 1px solid rgba(255, 179, 0, 0.02);
 }
 
@@ -402,6 +404,10 @@ body {
   overflow-y: auto;
 }
 
+.landing > * {
+  flex-shrink: 0;
+}
+
 .landing::before,
 .landing::after {
   content: '';
@@ -459,7 +465,7 @@ body {
 }
 
 .suggestion-card {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(15, 23, 42, 0.6);
   border: 1px solid var(--glass-border);
   padding: 1.5rem;
   border-radius: 20px;
@@ -603,7 +609,7 @@ h1, h2, h3, h4, h5, h6,
 
 /* Daily Sloka Card Styles */
 .daily-sloka-card {
-  background: rgba(15, 23, 42, 0.35);
+  background: rgba(15, 23, 42, 0.75);
   border: 1px solid rgba(255, 179, 0, 0.2);
   border-radius: 24px;
   padding: 2.5rem;
@@ -685,7 +691,7 @@ h1, h2, h3, h4, h5, h6,
 
 .daily-sloka-citation {
   font-family: var(--font-heading) !important;
-  font-size: 1.5rem;
+  font-size: clamp(1.2rem, 3.5vw, 1.5rem);
   color: var(--accent-gold-light);
   margin-bottom: 1.2rem;
   letter-spacing: 0.5px;
@@ -695,7 +701,7 @@ h1, h2, h3, h4, h5, h6,
 
 .daily-sloka-sanskrit {
   font-family: 'Noto Serif Devanagari', 'Noto Serif', 'Georgia', serif;
-  font-size: 1.6rem;
+  font-size: clamp(1.15rem, 4vw, 1.6rem);
   line-height: 1.7;
   color: #ffe8cc;
   margin-bottom: 1.5rem;
@@ -709,7 +715,7 @@ h1, h2, h3, h4, h5, h6,
 
 .daily-sloka-translation {
   font-family: 'Noto Sans Telugu', var(--font-content);
-  font-size: 1.3rem;
+  font-size: clamp(0.95rem, 3vw, 1.25rem);
   line-height: 1.75;
   color: #f1f5f9;
   margin-top: 0;
@@ -819,6 +825,26 @@ h1, h2, h3, h4, h5, h6,
   background: rgba(255, 87, 34, 0.06) !important;
 }
 
+/* Responsive Button Text & Language Selector classes */
+.btn-text, .music-btn-text {
+  display: inline;
+}
+
+.message-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.language-selector {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 1.2rem;
+  max-width: 400px !important;
+  width: 100%;
+  margin: 0 auto 1.5rem !important;
+}
+
 /* Mobile Menu Button Styles */
 .mobile-menu-btn {
   display: none;
@@ -859,6 +885,14 @@ h1, h2, h3, h4, h5, h6,
 
   .sidebar.open {
     transform: translateX(0);
+  }
+
+  .bg-oil-lamp {
+    width: 200px !important;
+    height: 200px !important;
+    opacity: 0.15 !important;
+    right: 4% !important;
+    bottom: 4% !important;
   }
 
   .sidebar-overlay {
@@ -952,6 +986,64 @@ h1, h2, h3, h4, h5, h6,
   .chat-messages {
     padding: 1.5rem 1rem;
     gap: 1.5rem;
+  }
+}
+
+/* Mobile & Small Screen Specific Media Queries */
+@media (max-width: 600px) {
+  .btn-text {
+    display: none !important;
+  }
+  
+  .daily-action-btn, .speech-btn, .export-btn {
+    padding: 8px !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    width: 38px !important;
+    height: 38px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  
+  .daily-sloka-actions, .message-actions {
+    gap: 12px !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .music-btn-text {
+    display: none !important;
+  }
+  
+  .music-toggle-btn {
+    padding: 0.5rem !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    width: 36px !important;
+    height: 36px !important;
+    justify-content: center !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+
+  .language-selector {
+    grid-template-columns: 1fr !important;
+    max-width: 280px !important;
+    gap: 0.8rem !important;
+  }
+
+  .message-content > div {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .daily-sloka-close {
+    top: 0.75rem !important;
+    right: 0.75rem !important;
   }
 }
 

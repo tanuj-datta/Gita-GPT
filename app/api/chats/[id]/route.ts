@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
 export async function GET(
   req: Request,
@@ -10,6 +11,7 @@ export async function GET(
     if (!process.env.DATABASE_URL) {
       return NextResponse.json({ id, title: "Chat", messages: [] });
     }
+    const session = await auth();
     const chat = await prisma.chat.findUnique({
       where: { id },
       include: {
@@ -21,6 +23,10 @@ export async function GET(
 
     if (!chat) {
       return NextResponse.json({ error: "Chat not found" }, { status: 404 });
+    }
+
+    if (chat.userId && chat.userId !== session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized access to chat" }, { status: 403 });
     }
 
     return NextResponse.json(chat);
@@ -38,6 +44,14 @@ export async function DELETE(
   try {
     if (!process.env.DATABASE_URL) {
       return NextResponse.json({ success: true });
+    }
+    const session = await auth();
+    const chat = await prisma.chat.findUnique({
+      where: { id }
+    });
+
+    if (chat && chat.userId && chat.userId !== session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized to delete chat" }, { status: 403 });
     }
     
     // Attempt deleting messages first if they exist

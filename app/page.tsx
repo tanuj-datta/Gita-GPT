@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import gitaData from '@/lib/gita-data.json';
+import { useSession, signIn, signOut } from "next-auth/react";
 
 interface Message {
   role: 'user' | 'bot';
@@ -10,6 +11,7 @@ interface Message {
 }
 
 export default function Home() {
+  const { data: session, status } = useSession();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLanding, setIsLanding] = useState(true);
@@ -583,17 +585,19 @@ export default function Home() {
   const fetchChats = async () => {
     try {
       let serverChats: any[] = [];
-      try {
-        const res = await fetch('/api/chats');
-        if (res.ok) {
-          serverChats = await res.json();
+      if (status === 'authenticated') {
+        try {
+          const res = await fetch('/api/chats');
+          if (res.ok) {
+            serverChats = await res.json();
+          }
+        } catch (e) {
+          console.warn("Failed to fetch server chats:", e);
         }
-      } catch (e) {
-        console.warn("Failed to fetch server chats, using fallback:", e);
       }
       
       let localChats: any[] = [];
-      if (typeof window !== 'undefined') {
+      if (status !== 'authenticated' && typeof window !== 'undefined') {
         const localChatsRaw = localStorage.getItem('gita_chats');
         localChats = localChatsRaw ? JSON.parse(localChatsRaw) : [];
       }
@@ -641,10 +645,61 @@ export default function Home() {
     }
   };
 
-  // Load chat list on mount
+  // Sync local chats to database on login, and refresh list
   useEffect(() => {
-    fetchChats();
-  }, []);
+    const syncLocalChats = async () => {
+      if (status === 'authenticated' && typeof window !== 'undefined') {
+        try {
+          const localChatsRaw = localStorage.getItem('gita_chats');
+          const localChats = localChatsRaw ? JSON.parse(localChatsRaw) : [];
+          
+          if (localChats.length > 0) {
+            console.log("Syncing local chats to server for user...");
+            for (const localChat of localChats) {
+              // 1. Create the chat on the server
+              const createRes = await fetch('/api/chats', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  title: localChat.title,
+                  language: localChat.language,
+                  customContext: localChat.customContext,
+                })
+              });
+              
+              if (createRes.ok) {
+                const serverChat = await createRes.json();
+                const serverChatId = serverChat.id;
+                
+                // 2. Push messages to the newly created server chat
+                if (localChat.messages && localChat.messages.length > 0) {
+                  for (const msg of localChat.messages) {
+                    await fetch('/api/chat', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        chatId: serverChatId,
+                        message: msg.content,
+                        language: localChat.language,
+                        customContext: localChat.customContext,
+                      })
+                    });
+                  }
+                }
+              }
+            }
+            // Clear local storage guest chats after successful sync
+            localStorage.removeItem('gita_chats');
+          }
+        } catch (err) {
+          console.error("Failed to sync local chats to user account:", err);
+        }
+      }
+      fetchChats();
+    };
+
+    syncLocalChats();
+  }, [session, status]);
 
   // Start new chat
   const startNewChat = () => {
@@ -952,16 +1007,79 @@ export default function Home() {
                     <span className="wave-bar bar-2"></span>
                     <span className="wave-bar bar-3"></span>
                   </span>
-                  <span>Soothing Flute</span>
+                  <span className="music-btn-text">Soothing Flute</span>
                 </>
               ) : (
                 <>
                   <span>🪈</span>
-                  <span>Soothing Flute</span>
+                  <span className="music-btn-text">Soothing Flute</span>
                 </>
               )}
             </button>
-            <div className="user-profile" style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--glass-hover)' }}></div>
+            {status === 'loading' ? (
+              <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid var(--glass-border)', borderTopColor: 'var(--accent-gold)', animation: 'spin 1s linear infinite' }} />
+            ) : session?.user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {session.user.image ? (
+                  <Image 
+                    src={session.user.image} 
+                    alt={session.user.name || "User"} 
+                    width={32} 
+                    height={32} 
+                    className="user-avatar"
+                    style={{ borderRadius: '50%', border: '1.5px solid var(--accent-gold)', cursor: 'pointer' }}
+                    title={`Logged in as ${session.user.name}`}
+                  />
+                ) : (
+                  <div 
+                    className="avatar" 
+                    style={{ width: 32, height: 32, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    title={`Logged in as ${session.user.name}`}
+                  >
+                    👤
+                  </div>
+                )}
+                <button 
+                  onClick={() => signOut()}
+                  style={{
+                    background: 'rgba(255, 87, 34, 0.08)',
+                    border: '1px solid rgba(255, 87, 34, 0.2)',
+                    color: '#ff8a65',
+                    padding: '4px 10px',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => signIn('google')}
+                style={{
+                  background: 'rgba(255, 179, 0, 0.08)',
+                  border: '1px solid rgba(255, 179, 0, 0.2)',
+                  color: 'var(--accent-gold)',
+                  padding: '6px 12px',
+                  borderRadius: '10px',
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.555 0-6.438-2.883-6.438-6.438s2.883-6.438 6.438-6.438c1.594 0 3.036.586 4.157 1.545l3.054-3.054C19.346 2.378 15.933 1 12.24 1 5.922 1 12.24s4.922 11.24 11.24 11.24c6.236 0 11.24-5.004 11.24-11.24 0-.743-.072-1.467-.2-2.155H12.24z"/>
+                </svg>
+                Sign In
+              </button>
+            )}
           </div>
         </header>
 
@@ -980,7 +1098,7 @@ export default function Home() {
             <h1>Choose Your Language</h1>
             <p>Select the language in which you wish to explore the divine wisdom of the Bhagavad Gita.</p>
             
-            <div className="suggestions" style={{ gridTemplateColumns: 'repeat(2, 1fr)', maxWidth: '400px' }}>
+            <div className="language-selector suggestions">
               <div className="suggestion-card" onClick={() => { setLanguage('English'); setShowDailyWisdom(true); }}>
                 <h3 style={{ textAlign: 'center', fontSize: '1.2rem' }}>English</h3>
               </div>
@@ -1003,6 +1121,47 @@ export default function Home() {
             </div>
             <h1>Welcome, Seeker</h1>
             <p>Explore the eternal wisdom of the Bhagavad Gita. Seek guidance for life's challenges or find specific verses to illuminate your path.</p>
+            
+            {status !== 'loading' && !session && (
+              <div 
+                style={{
+                  background: 'rgba(255, 179, 0, 0.03)',
+                  border: '1px dashed rgba(255, 179, 0, 0.2)',
+                  borderRadius: '16px',
+                  padding: '1rem',
+                  maxWidth: '760px',
+                  width: '100%',
+                  margin: '0 auto 1.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  textAlign: 'left'
+                }}
+              >
+                <div>
+                  <h4 style={{ color: 'var(--accent-gold)', marginBottom: '0.2rem', fontSize: '0.95rem', fontFamily: 'var(--font-heading)' }}>Save Your Spiritual Journey</h4>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0, lineHeight: 1.4 }}>Sign in with Google to automatically back up your conversations and access your chat history from any device.</p>
+                </div>
+                <button
+                  onClick={() => signIn('google')}
+                  style={{
+                    background: 'var(--accent-gold)',
+                    color: '#060913',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Sign In with Google
+                </button>
+              </div>
+            )}
             
             {dailySloka && showDailyWisdom && (
               <div className="daily-sloka-card" style={{ position: 'relative' }}>
@@ -1033,14 +1192,22 @@ export default function Home() {
                     className={`daily-action-btn ${speakingDaily === 'sanskrit' ? 'active' : ''}`}
                     title="Pronounce Sanskrit Sloka"
                   >
-                    {speakingDaily === 'sanskrit' ? "⏸️ Stop Pronunciation" : "🪈 Pronounce Sloka"}
+                    {speakingDaily === 'sanskrit' ? (
+                      <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Pronunciation</span></>
+                    ) : (
+                      <><span className="btn-icon">🪈</span> <span className="btn-text">Pronounce Sloka</span></>
+                    )}
                   </button>
                   <button
                     onClick={() => handleSpeakDaily(dailySloka.sanskrit, language === 'Telugu' ? dailySloka.telugu : dailySloka.english, false)}
                     className={`daily-action-btn ${speakingDaily === 'translation' ? 'active' : ''}`}
                     title="Listen to Translation"
                   >
-                    {speakingDaily === 'translation' ? "⏸️ Stop Translation" : "🔊 Listen Translation"}
+                    {speakingDaily === 'translation' ? (
+                      <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Translation</span></>
+                    ) : (
+                      <><span className="btn-icon">🔊</span> <span className="btn-text">Listen Translation</span></>
+                    )}
                   </button>
                   <button
                     onClick={() => handleExportCard(
@@ -1052,7 +1219,7 @@ export default function Home() {
                     className="daily-action-btn export"
                     title="Export as Wisdom Card"
                   >
-                    🎨 Export Card
+                    <span className="btn-icon">🎨</span> <span className="btn-text">Export Card</span>
                   </button>
                 </div>
               </div>
@@ -1089,16 +1256,16 @@ export default function Home() {
                       {msg.role === 'bot' ? "Krishna's Wisdom" : 'You'}
                     </span>
                     {msg.role === 'bot' && (
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div className="message-actions" style={{ display: 'flex', gap: '8px' }}>
                         <button
                           onClick={() => handleSpeakMessage(msg.content, true, i)}
                           className={`speech-btn ${speakingMsgIndex === i && speakingType === 'sanskrit' ? 'active' : ''}`}
                           title="Pronounce Sanskrit Sloka"
                         >
                           {speakingMsgIndex === i && speakingType === 'sanskrit' ? (
-                            <>⏸️ Stop Sloka</>
+                            <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Sloka</span></>
                           ) : (
-                            <>🪈 Pronounce Sloka</>
+                            <><span className="btn-icon">🪈</span> <span className="btn-text">Pronounce Sloka</span></>
                           )}
                         </button>
                         <button
@@ -1107,9 +1274,9 @@ export default function Home() {
                           title="Listen to translation and explanation"
                         >
                           {speakingMsgIndex === i && speakingType === 'explanation' ? (
-                            <>⏸️ Stop Explanation</>
+                            <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Explanation</span></>
                           ) : (
-                            <>🔊 Listen Explanation</>
+                            <><span className="btn-icon">🔊</span> <span className="btn-text">Listen Explanation</span></>
                           )}
                         </button>
                         <button
@@ -1122,7 +1289,7 @@ export default function Home() {
                           className="export-btn"
                           title="Export as Wisdom Card"
                         >
-                          🎨 Export Card
+                          <span className="btn-icon">🎨</span> <span className="btn-text">Export Card</span>
                         </button>
                       </div>
                     )}

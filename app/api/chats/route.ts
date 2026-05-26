@@ -1,12 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
 export async function GET() {
   try {
     if (!process.env.DATABASE_URL) {
       return NextResponse.json([]);
     }
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json([]);
+    }
     const chats = await prisma.chat.findMany({
+      where: { userId: session.user.id },
       orderBy: { updatedAt: "desc" },
     });
     return NextResponse.json(chats);
@@ -22,6 +28,9 @@ export async function POST(req: Request) {
     requestData = await req.json().catch(() => ({}));
     const { title, language, customContext } = requestData;
     
+    const session = await auth();
+    const userId = session?.user?.id;
+
     if (!process.env.DATABASE_URL) {
       return NextResponse.json({
         id: `mock-chat-${Date.now()}`,
@@ -37,6 +46,7 @@ export async function POST(req: Request) {
         title: title || "New Conversation",
         language: language || "English",
         customContext: customContext || "",
+        userId: userId || null,
       }
     });
     return NextResponse.json(chat);

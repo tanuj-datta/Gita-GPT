@@ -4,12 +4,16 @@ import gitaData from '@/lib/gita-data.json';
 import { prisma } from "@/lib/prisma";
 import fs from 'fs';
 import path from 'path';
+import { auth } from "@/auth";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
   try {
     let { chatId, message, language, customContext } = await req.json();
+
+    const session = await auth();
+    const userId = session?.user?.id;
 
     // 1. DATABASE INTERACTION: Save user message and/or create chat
     let dbSuccess = false;
@@ -22,9 +26,18 @@ export async function POST(req: Request) {
               title,
               language: language || "English",
               customContext: customContext || "",
+              userId: userId || null,
             }
           });
           chatId = chat.id;
+        } else {
+          // If chatId is provided, verify ownership
+          const chat = await prisma.chat.findUnique({
+            where: { id: chatId }
+          });
+          if (chat && chat.userId && chat.userId !== userId) {
+            return new Response(JSON.stringify({ error: "Unauthorized access to this chat." }), { status: 403 });
+          }
         }
 
         await prisma.message.create({
