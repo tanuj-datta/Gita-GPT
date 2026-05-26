@@ -1,0 +1,119 @@
+{
+  "chapters": [
+    {
+      "number": 2,
+      "name": "Sankhya Yoga",
+      "slokas": [
+        {
+          "number": 22,
+          "sanskrit": "वासांसि जीर्णानि यथा विहाय\nनवानि गृह्णाति नरोऽपराणि।\nतथा शरीराणि विहाय जीर्णान्य-\nन्यानि संयाति नवानि देही॥ २२॥",
+          "transliteration": "vāsāṁsi jīrṇāni yathā vihāya\nnavāni gṛhṇāti naro ’parāṇi\ntathā śarīrāni vihāya jīrṇāny\nanyāni saṁyāti navāni dehī",
+          "english": "As a person puts on new garments, giving up old ones, the soul similarly accepts new material bodies, giving up the old and useless ones.",
+          "telugu": "చిరిగిన వస్త్రములను విడిచి నూతన వస్త్రములను ధరించునట్లే, ఆత్మ జీర్ణమైన శరీరములను విడిచి నూతన శరీరములను ధరించును.",
+          "tags": ["soul", "body", "death", "change", "reincarnation"]
+        },
+        {
+          "number": 47,
+          "sanskrit": "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन।\nमा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि॥ ४७॥",
+          "transliteration": "karmaṇy-evādhikāras te mā phaleṣhu kadāchana\nmā karma-phala-hetur bhūr mā te saṅgo ’stvakarmaṇi",
+          "english": "You have a right to perform your prescribed duties, but you are not entitled to the fruits of your actions. Never consider yourself to be the cause of the results of your activities, nor be attached to inaction.",
+          "telugu": "కర్మలనాచరించుటయందే నీకు అధికారము కలదు, కానీ వాటి ఫలితాలపై కాదు. కర్మఫలమునకు నీవే కారణమని భావించకుము, అలాగని కర్మలు చేయకపోవుటలో ఆసక్తిని కలిగి ఉండకుము.",
+          "tags": ["duty", "action", "attachment", "anxiety", "results"]
+        },
+        {
+          "number": 70,
+          "sanskrit": "आपूर्यमाणमचलप्रतिष्ठं\nसमुद्रमाप: प्रविशन्ति यद्वत् ।\nतद्वत्कामा यं प्रविशन्ति सर्वे\nस शान्तिमाप्नोति न कामकामी ॥ ७० ॥",
+          "transliteration": "āpūryamāṇam achala-pratiṣhṭhaṁ\nsamudram āpaḥ praviśhanti yadvat\ntadvat kāmā yaṁ praviśhanti sarve\nsa śhāntim āpnoti na kāma-kāmī",
+          "english": "As the ocean remains undisturbed by the incessant flow of waters from rivers merging into it, so the wise one who is not disturbed by the flow of desires can alone achieve peace, and not the person who strives to satisfy such desires.",
+          "telugu": "నదుల నీరు నిరంతరం వచ్చి చేరినప్పటికీ సముద్రం ఏ విధంగా నిశ్చలంగా ఉంటుందో, అలాగే కోరికల ప్రవాహం తనలోకి చేరినప్పటికీ ఎవరైతే చలించకుండా ఉంటారో వారే శాంతిని పొందుతారు, భోగాలను కోరేవారు కాదు.",
+          "tags": ["peace", "desire", "stability", "meditation"]
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Jnana Karma Sanyasa Yoga",
+      "slokas": [
+        {
+          "number": 7,
+          "sanskrit": "यदा यदा हि धर्मस्य ग्लानिर्भवति भारत।\nअभ्युत्थानमधर्मस्य तदात्मानं सृजाम्यहम्॥ ७॥",
+          "transliteration": "yadā yadā hi dharmasya glānir bhavati bhārata\nabhyutthānam adharmasya tadātmānaṁ sṛjāmy aham",
+          "english": "Whenever and wherever there is a decline in religious practice, O descendant of Bharata, and a predominant rise of irreligion—at that time I descend Myself.",
+          "telugu": "ఓ భరతవంశీయుడా! ధర్మానికి హాని కలిగి, అధర్మం పెచ్చురిల్లినప్పుడల్లా నన్ను నేను సృష్టించుకుంటాను.",
+          "tags": ["righteousness", "avatar", "dharma", "decline"]
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "name": "Dhyana Yoga",
+      "slokas": [
+        {
+          "number": 5,
+          "sanskrit": "उद्धरेदात्मनात्मानं नात्मानमवसादयेत् ।\nआत्मैव ह्यात्मनो बन्धुरात्मैव रिपुरात्मन: ॥ ५ ॥",
+          "transliteration": "uddhared ātmanātmānaṁ nātmānam avasādayet\nātmaiva hyātmano bandhur ātmaiva ripur ātmanaḥ",
+          "english": "Elevate yourself through the power of your mind, and do not degrade yourself. For the mind can be the friend and also the enemy of the self.",
+          "telugu": "మనస్సు ద్వారా నిన్ను నీవు ఉద్ధరించుకో, కానీ అధోగతి పాలు చేసుకోకు. ఎందుకంటే మనస్సే మనిషికి మిత్రుడు కాగలదు, మరియు శత్రువు కూడా కాగలదు.",
+          "tags": ["mind", "friend", "enemy", "self-improvement", "depression"]
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "name": "Raja Vidya Raja Guhya Yoga",
+      "slokas": [
+        {
+          "number": 22,
+          "sanskrit": "अनन्याश्चिन्तयन्तो मां ये जनाః पर्युपासते।\nतेषां नित्याभियुक्तानां योगक्षेमं वहाम्यहम्॥ २२॥",
+          "transliteration": "ananyāś cintayanto māṁ ye janāḥ paryupāsate\nteṣāṁ nityābhiyuktānāṁ yoga-kṣemaṁ vahāmy aham",
+          "english": "But those who always worship Me with exclusive devotion, meditating on My transcendental form—to them I carry what they lack, and I preserve what they have.",
+          "telugu": "నన్నే నిరంతరం ధ్యానిస్తూ, అనన్య భక్తితో ఆరాధించే వారి యోగక్షేమాలను నేనే స్వయంగా వహిస్తాను.",
+          "tags": ["devotion", "protection", "surrender", "worship"]
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "name": "Moksha Sanyasa Yoga",
+      "slokas": [
+        {
+          "number": 66,
+          "sanskrit": "सर्वधर्मान्परित्यज्य मामेकं शरणं व्रज।\nअहं त्वां सर्वपापेभ्यो मोक्षयिष्यामि मा शुचः॥ ६६॥",
+          "transliteration": "sarva-dharmān parityajya mām ekaṁ śaraṇaṁ vraja\nahaṁ tvāṁ sarva-pāpebhyo mokṣayiṣyāmi mā śucaḥ",
+          "english": "Abandon all varieties of religion and just surrender unto Me. I shall deliver you from all sinful reactions. Do not fear.",
+          "telugu": "సమస్త ధర్మాలను వదిలి నన్నొక్కడినే శరణు వేడుము. నేను నిన్ను అన్ని పాపాల నుండి విముక్తుడిని చేస్తాను, భయపడకుము.",
+          "tags": ["surrender", "liberation", "fear", "forgiveness"]
+        }
+      ]
+    }
+  ],
+  "emotional_mapping": {
+    "anxiety": [2, 47],
+    "stress": [2, 47],
+    "peace": [2, 70],
+    "fear": [2, 47],
+    "depression": [6, 5],
+    "suicidal": [6, 5],
+    "purpose": [2, 47]
+  },
+  "eighteen_chapters_summary": [
+    "Chapter 1: Arjuna's Grief - Arjuna is overwhelmed by sorrow on the battlefield and refuses to fight, questioning the morality of the war. Krishna begins his discourse to lift Arjuna's spirits.",
+    "Chapter 2: Sankhya Yoga - Krishna teaches about the eternal nature of the soul (Atma) and the necessity of performing one's duty without attachment to results.",
+    "Chapter 3: Karma Yoga - Krishna explains the importance of selfless action and performing one's duties as a sacrifice to the Divine.",
+    "Chapter 4: Jnana Karma Sanyasa Yoga - Krishna reveals his divine nature and the path of transcendental knowledge that burns the seeds of karma.",
+    "Chapter 5: Karma Sanyasa Yoga - Krishna clarifies the relationship between renunciation of action and action in devotion, concluding that both lead to the same goal.",
+    "Chapter 6: Dhyana Yoga - Krishna describes the path of meditation and mind control, emphasizing that the mind is both one's friend and enemy.",
+    "Chapter 7: Jnana Vijnana Yoga - Krishna explains his material and spiritual energies and how to realize the Divine through complete surrender.",
+    "Chapter 8: Akshara Brahma Yoga - Krishna discusses the journey after death and the importance of remembering the Supreme at the time of passing.",
+    "Chapter 9: Raja Vidya Raja Guhya Yoga - Krishna reveals the most confidential knowledge of devotion and his all-pervading, yet detached, nature.",
+    "Chapter 10: Vibhuti Yoga - Krishna describes his infinite opulences and manifestations in the world to help Arjuna understand his divine presence everywhere.",
+    "Chapter 11: Vishwarupa Darshana Yoga - Krishna grants Arjuna a divine vision to see his universal form, showing that everything resides within him.",
+    "Chapter 12: Bhakti Yoga - Krishna defines the path of pure devotion and lists the qualities of a devotee who is truly dear to him.",
+    "Chapter 13: Kshetra Kshetrajna Vibhaga Yoga - Krishna explains the difference between the body (the field) and the soul (the knower of the field).",
+    "Chapter 14: Gunatraya Vibhaga Yoga - Krishna describes the three modes of material nature (goodness, passion, and ignorance) and how to transcend them.",
+    "Chapter 15: Purushottama Yoga - Krishna uses the image of the Banyan tree to explain the material world and reveals himself as the Supreme Person.",
+    "Chapter 16: Daivasura Sampad Vibhaga Yoga - Krishna contrasts divine and demonic qualities, guiding Arjuna on how to cultivate virtues for liberation.",
+    "Chapter 17: Shraddhatraya Vibhaga Yoga - Krishna explains how faith, food, sacrifice, and charity are influenced by the three modes of nature.",
+    "Chapter 18: Moksha Sanyasa Yoga - The final summary where Krishna explains the essence of renunciation, the goal of life, and his ultimate instruction of surrender."
+  ]
+}
