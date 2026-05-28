@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import gitaData from '@/lib/gita-data.json';
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useAudio } from '@/components/AudioContext';
 
 interface Message {
   role: 'user' | 'bot';
@@ -21,13 +22,11 @@ export default function Home() {
   const [showContextInput, setShowContextInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Background Music and TTS States
-  const [bgMusicPlaying, setBgMusicPlaying] = useState(false);
+  // Background Music from global context and local TTS States
+  const { bgMusicPlaying, setBgMusicPlaying } = useAudio();
   const [speakingMsgIndex, setSpeakingMsgIndex] = useState<number | null>(null);
   const [speakingType, setSpeakingType] = useState<'sanskrit' | 'explanation' | null>(null);
   const [speakingDaily, setSpeakingDaily] = useState<'sanskrit' | 'translation' | null>(null);
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Database Chat State
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -67,23 +66,8 @@ export default function Home() {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  // Background Music playback controls
+  // Handle speech initialization
   useEffect(() => {
-    if (audioRef.current) {
-      if (bgMusicPlaying) {
-        audioRef.current.play().catch(e => console.warn("Audio autoplay blocked or failed:", e));
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [bgMusicPlaying]);
-
-  // Set initial background music volume and handle speech initialization
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.12; // Set volume to 12% (quiet ambient)
-    }
-
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       const handleVoicesChanged = () => {
         window.speechSynthesis.getVoices();
@@ -899,13 +883,6 @@ export default function Home() {
 
   return (
     <div className="app-container">
-      {/* Background Music Audio Element */}
-      <audio 
-        ref={audioRef} 
-        src="/audio/monsoon_whispers.m4a" 
-        loop 
-        preload="auto"
-      />
       <div className="bg-grid"></div>
       <div className="bg-oil-lamp"></div>
       {/* Sidebar */}

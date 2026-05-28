@@ -5,6 +5,7 @@ export interface Sloka {
   sanskrit: string;
   transliteration: string;
   english: string;
+  telugu?: string;
   tags: string[];
 }
 

@@ -85,12 +85,13 @@ export async function POST(req: Request) {
       gitaContext = `[ESSENTIAL SUMMARY OF 18 CHAPTERS]\n` + gitaData.eighteen_chapters_summary.join("\n");
     }
 
-    // Feature 2: Structured lookup
-    const lookupMatch = lowerText.match(/chapter\s*(\d+).*sloka\s*(\d+)/i);
+    // Feature 2: Structured lookup (matching both English and Telugu script formats)
+    const lookupMatch = lowerText.match(/(?:chapter|అధ్యాయం|అధ్యాయము)\s*(\d+).*(?:sloka|శ్లోకం|శ్లోకము)\s*(\d+)/i);
     if (lookupMatch) {
       const result = getSloka(parseInt(lookupMatch[1]), parseInt(lookupMatch[2]));
       if (result) {
-        gitaContext += `\n\n[DIRECT VERSE REFERENCE] Chapter ${lookupMatch[1]}, Verse ${lookupMatch[2]}: "${result.sanskrit}" | Meaning: "${result.english}"`;
+        const meaning = language === 'Telugu' ? (result.telugu || result.english) : result.english;
+        gitaContext += `\n\n[DIRECT VERSE REFERENCE] Chapter ${lookupMatch[1]}, Verse ${lookupMatch[2]}: "${result.sanskrit}" | Meaning: "${meaning}"`;
       }
     }
 
@@ -104,20 +105,20 @@ export async function POST(req: Request) {
         const keywords = lowerText.split(' ').filter((w: string) => w.length > 3);
         
         // Emotional state mapping for PDF text search (both English and Telugu)
-        if (lowerText.includes('sad') || lowerText.includes('grief') || lowerText.includes('sorrow') || lowerText.includes('depress') || lowerText.includes('pain') || lowerText.includes('బాధ') || lowerText.includes('దుఃఖ')) {
-          keywords.push('grief', 'sorrow', 'lament', 'shoka', 'grieve', 'depressed', 'pain', 'బాధ', 'దుఃఖ');
+        if (lowerText.includes('sad') || lowerText.includes('grief') || lowerText.includes('sorrow') || lowerText.includes('depress') || lowerText.includes('pain') || lowerText.includes('బాధ') || lowerText.includes('దుఃఖ') || lowerText.includes('కష్టం') || lowerText.includes('చింత')) {
+          keywords.push('grief', 'sorrow', 'lament', 'shoka', 'grieve', 'depressed', 'pain', 'బాధ', 'దుఃఖ', 'కష్టం', 'చింత');
         }
-        if (lowerText.includes('angry') || lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('temper') || lowerText.includes('కోపం') || lowerText.includes('క్రోధం')) {
-          keywords.push('anger', 'krodha', 'wrath', 'lust', 'desire', 'passion', 'kama', 'కోపం', 'క్రోధం');
+        if (lowerText.includes('angry') || lowerText.includes('anger') || lowerText.includes('rage') || lowerText.includes('temper') || lowerText.includes('కోపం') || lowerText.includes('క్రోధం') || lowerText.includes('అగ్రహం')) {
+          keywords.push('anger', 'krodha', 'wrath', 'lust', 'desire', 'passion', 'kama', 'కోపం', 'క్రోధం', 'అగ్రహం');
         }
-        if (lowerText.includes('jealous') || lowerText.includes('envy') || lowerText.includes('envious') || lowerText.includes('jealousy') || lowerText.includes('అసూయ') || lowerText.includes('ఈర్ష్య')) {
-          keywords.push('envy', 'jealous', 'envious', 'matsarya', 'hate', 'malice', 'అసూయ', 'ఈర్ష్య');
+        if (lowerText.includes('jealous') || lowerText.includes('envy') || lowerText.includes('envious') || lowerText.includes('jealousy') || lowerText.includes('అసూయ') || lowerText.includes('ఈర్ష్య') || lowerText.includes('ద్వేషం')) {
+          keywords.push('envy', 'jealous', 'envious', 'matsarya', 'hate', 'malice', 'అసూయ', 'ఈర్ష్య', 'ద్వేషం');
         }
-        if (lowerText.includes('happy') || lowerText.includes('joy') || lowerText.includes('happiness') || lowerText.includes('pleasure') || lowerText.includes('సంతోష') || lowerText.includes('ఆనంద')) {
-          keywords.push('joy', 'sukha', 'happiness', 'peace', 'pleasure', 'delight', 'సంతోష', 'ఆనంద');
+        if (lowerText.includes('happy') || lowerText.includes('joy') || lowerText.includes('happiness') || lowerText.includes('pleasure') || lowerText.includes('సంతోష') || lowerText.includes('ఆనంద') || lowerText.includes('సుఖం')) {
+          keywords.push('joy', 'sukha', 'happiness', 'peace', 'pleasure', 'delight', 'సంతోష', 'ఆనంద', 'సుఖం');
         }
-        if (lowerText.includes('scared') || lowerText.includes('fear') || lowerText.includes('anxious') || lowerText.includes('anxiety') || lowerText.includes('stress') || lowerText.includes('భయం')) {
-          keywords.push('fear', 'anxiety', 'bhaya', 'worry', 'stress', 'mind', 'steady', 'భయం');
+        if (lowerText.includes('scared') || lowerText.includes('fear') || lowerText.includes('anxious') || lowerText.includes('anxiety') || lowerText.includes('stress') || lowerText.includes('భయం') || lowerText.includes('ఆందోళన') || lowerText.includes('దిగులు')) {
+          keywords.push('fear', 'anxiety', 'bhaya', 'worry', 'stress', 'mind', 'steady', 'భయం', 'ఆందోళన', 'దిగులు');
         }
         if (lowerText.includes('suicidal') || lowerText.includes('death') || lowerText.includes('చావు') || lowerText.includes('మరణం')) {
           keywords.push('life', 'mind', 'elevate', 'atma', 'shoka', 'suicide', 'death', 'చావు', 'మరణం');
@@ -145,6 +146,21 @@ export async function POST(req: Request) {
       console.error("PDF Context Error:", e);
     }
 
+    // Feature 4: Include core slokas with authentic translations in context
+    let coreVersesContext = "[AUTHENTIC CORE VERSE TRANSLATIONS (ENGLISH & TELUGU)]\n";
+    gitaData.chapters.forEach((chap: any) => {
+      chap.slokas.forEach((s: any) => {
+        coreVersesContext += `Chapter ${chap.number}, Verse ${s.number}:\n`;
+        coreVersesContext += `Sanskrit: ${s.sanskrit}\n`;
+        coreVersesContext += `English Translation: ${s.english}\n`;
+        if (s.telugu) {
+          coreVersesContext += `Telugu Translation (భావం): ${s.telugu}\n`;
+        }
+        coreVersesContext += `\n`;
+      });
+    });
+    gitaContext += `\n\n${coreVersesContext}`;
+
     // 4. LLM GENERATION
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
@@ -152,7 +168,7 @@ export async function POST(req: Request) {
       You are the Divine Voice of Lord Krishna, speaking directly to a GenZ seeker.
       
       CORE INSTRUCTIONS:
-      1. SLOKA ON TOP: You MUST display the relevant Bhagavad Gita Sloka(s) (with Chapter and Verse numbers, Sanskrit text, and translation) at the very top of your response, before any explanations, advice, or GenZ analogies. Use bold for the verse citations (e.g., **Chapter 2, Verse 47**) so it stands out clearly.
+      1. SLOKA ON TOP: You MUST display the relevant Bhagavad Gita Sloka(s) (with Chapter and Verse numbers, Sanskrit text, and translation) at the very top of your response, before any explanations, advice, or GenZ analogies. Use bold for the verse citations (e.g., **Chapter 2, Verse 47** or **అధ్యాయం 2, శ్లోకం 47**). If the selected language is TELUGU, the translation/meaning of the sloka MUST be the authentic, traditional Telugu meaning (Bhava/Tatparya) from the Bhagavad Gita, avoiding literal or line-to-line translation from English. Use the traditional Telugu verses and meanings found in [DIRECT VERSE REFERENCE] or [AUTHENTIC CORE VERSE TRANSLATIONS] if applicable, or traditional Bhagavad Gita interpretations.
       2. GENZ ACCENT & VIBE: Keep the explanation short, crisp, and punchy. Avoid long, boring paragraphs. Use relatable GenZ slang (e.g., "no cap", "fr fr", "rent-free", "toxic era", "lagging", "main character", "grind", "glow up", "vibe check", "cancel") naturally and compassionately.
       3. REAL GITA EXAMPLES EXPLAINED FOR GENZ: Ground your advice in actual analogies and examples from the Bhagavad Gita, explained in a modern GenZ way:
          - Arjuna's struggle (Chapter 1) = Having a major panic attack, lagging hard, wanting to quit the lobby.
@@ -164,7 +180,7 @@ export async function POST(req: Request) {
       5. RIGID FIDELITY TO SCRIPTURE: You must ground your response strictly in the Bhagavad Gita. Do not formulate random advices. Ground the response using the provided [DIVINE KNOWLEDGE BASE] and your internal training of the authentic Bhagavad Gita.
       6. LANGUAGE COMPLIANCE:
          - Selected Language: ${(language || 'English').toUpperCase()}
-         - CRITICAL: If the selected language is TELUGU, translate the GenZ style, slang, and advice into modern, informal, highly relatable Telugu youth slang (e.g., using terms like "bro", "taggade le", "chill avvu", "baga cheppav"). The entire response must be generated in Telugu script. If English, write in English.
+         - CRITICAL: If the selected language is TELUGU, the entire response (including the Sloka translation and explanations) must be in Telugu script. Do NOT translate English explanations line-to-line into Telugu. Instead, express the spiritual meanings using authentic, traditional Telugu Bhagavad Gita terminology (like "తాత్పర్యం", "భావం", "మోక్షం", "కర్మ"). Meanwhile, adapt the surrounding GenZ advice, slang, and analogies into modern, informal, highly relatable Telugu youth slang (e.g., using terms like "bro", "taggade le", "chill avvu", "baga cheppav").
       
       TONE: Divine, wise, compassionate, but extremely chill, relatable, and direct. Use the 🪈 emoji.
       
