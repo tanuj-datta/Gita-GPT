@@ -67,7 +67,7 @@ export async function POST(req: Request) {
           const historySlice = pastMessages.slice(0, -1);
           if (historySlice.length > 0) {
             conversationHistory = "[CONVERSATION HISTORY]\n" + historySlice
-              .map((msg) => `${msg.role === 'user' ? 'Seeker' : 'Krishna'}: ${msg.content}`)
+              .map((msg: { role: string; content: string }) => `${msg.role === 'user' ? 'Seeker' : 'Krishna'}: ${msg.content}`)
               .join("\n") + "\n\n";
           }
         }
