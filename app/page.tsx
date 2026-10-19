@@ -5,6 +5,7 @@ import Image from 'next/image';
 import gitaData from '@/lib/gita-data.json';
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useAudio } from '@/components/AudioContext';
+import ChapterRoadmap from '@/components/ChapterRoadmap';
 
 interface Message {
   role: 'user' | 'bot';
@@ -774,6 +775,13 @@ export default function Home() {
     }
   };
 
+  const handleSelectVerse = (chapterNum: number, verseNum: string) => {
+    const query = language === 'Telugu'
+      ? `అధ్యాయం ${chapterNum} శ్లోకం ${verseNum} చూపించి వివరించు.`
+      : `Show me Chapter ${chapterNum} Sloka ${verseNum} and explain it.`;
+    handleSend(query);
+  };
+
   const handleSend = async (text: string = input) => {
     if (!text.trim()) return;
 
@@ -883,8 +891,14 @@ export default function Home() {
 
   return (
     <div className="app-container">
-      <div className="bg-grid"></div>
-      <div className="bg-oil-lamp"></div>
+      {/* Ethereal Atmospheric Glassmorphic Aurora Mesh */}
+      <div className="bg-ambient-mesh" aria-hidden="true"></div>
+      <div className="bg-ambient-orb-gold" aria-hidden="true"></div>
+      <div className="bg-ambient-orb-indigo" aria-hidden="true"></div>
+      <div className="bg-ambient-orb-warm" aria-hidden="true"></div>
+      <div className="bg-ambient-orb-cyan" aria-hidden="true"></div>
+      <div className="bg-grid" aria-hidden="true"></div>
+
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <button className="new-chat-btn" onClick={() => { startNewChat(); setSidebarOpen(false); }}>
@@ -925,11 +939,12 @@ export default function Home() {
       {/* Main Chat Area */}
       <main className="main-chat">
         <header className="chat-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="header-left">
             <button 
               className="mobile-menu-btn" 
               onClick={() => setSidebarOpen(!sidebarOpen)}
               title="Toggle Sidebar"
+              aria-label="Toggle Navigation Sidebar"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -939,7 +954,6 @@ export default function Home() {
             </button>
             <div 
               className="logo" 
-              style={{ fontWeight: 600, color: 'var(--accent-gold)', cursor: 'pointer' }}
               onClick={() => {
                 setLanguage(null);
                 setIsLanding(true);
@@ -953,29 +967,17 @@ export default function Home() {
                 setSpeakingDaily(null);
               }}
             >
-              Gita-GPT {language && `(${language})`} 🪈
+              <span className="logo-title">Gita-GPT</span>
+              {language && <span className="logo-badge">{language}</span>}
+              <span className="logo-flute">🪈</span>
             </div>
           </div>
           
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="header-right">
             <button
               onClick={() => setBgMusicPlaying(!bgMusicPlaying)}
               className={`music-toggle-btn ${bgMusicPlaying ? 'playing' : ''}`}
               title={bgMusicPlaying ? "Pause soothing flute music" : "Play soothing flute music"}
-              style={{
-                background: bgMusicPlaying ? 'rgba(255, 179, 0, 0.1)' : 'var(--glass-hover)',
-                border: bgMusicPlaying ? '1px solid rgba(255, 179, 0, 0.3)' : '1px solid var(--glass-border)',
-                color: bgMusicPlaying ? 'var(--accent-gold)' : 'var(--text-muted)',
-                padding: '0.5rem 1rem',
-                borderRadius: '12px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '0.85rem',
-                fontWeight: 500,
-                transition: 'all 0.3s ease',
-              }}
             >
               {bgMusicPlaying ? (
                 <>
@@ -994,9 +996,9 @@ export default function Home() {
               )}
             </button>
             {status === 'loading' ? (
-              <div style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid var(--glass-border)', borderTopColor: 'var(--accent-gold)', animation: 'spin 1s linear infinite' }} />
+              <div className="header-auth-spinner" />
             ) : session?.user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="header-user-profile">
                 {session.user.image ? (
                   <Image 
                     src={session.user.image} 
@@ -1004,13 +1006,11 @@ export default function Home() {
                     width={32} 
                     height={32} 
                     className="user-avatar"
-                    style={{ borderRadius: '50%', border: '1.5px solid var(--accent-gold)', cursor: 'pointer' }}
                     title={`Logged in as ${session.user.name}`}
                   />
                 ) : (
                   <div 
-                    className="avatar" 
-                    style={{ width: 32, height: 32, fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    className="avatar user-avatar-icon" 
                     title={`Logged in as ${session.user.name}`}
                   >
                     👤
@@ -1018,17 +1018,7 @@ export default function Home() {
                 )}
                 <button 
                   onClick={() => signOut()}
-                  style={{
-                    background: 'rgba(255, 87, 34, 0.08)',
-                    border: '1px solid rgba(255, 87, 34, 0.2)',
-                    color: '#ff8a65',
-                    padding: '4px 10px',
-                    borderRadius: '8px',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer',
-                    fontWeight: 600,
-                    transition: 'all 0.2s'
-                  }}
+                  className="header-logout-btn"
                 >
                   Logout
                 </button>
@@ -1036,25 +1026,12 @@ export default function Home() {
             ) : (
               <button
                 onClick={() => signIn('google')}
-                style={{
-                  background: 'rgba(255, 179, 0, 0.08)',
-                  border: '1px solid rgba(255, 179, 0, 0.2)',
-                  color: 'var(--accent-gold)',
-                  padding: '6px 12px',
-                  borderRadius: '10px',
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 0.2s'
-                }}
+                className="header-signin-btn"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-5.136 4.114-3.555 0-6.438-2.883-6.438-6.438s2.883-6.438 6.438-6.438c1.594 0 3.036.586 4.157 1.545l3.054-3.054C19.346 2.378 15.933 1 12.24 1 5.922 1 12.24s4.922 11.24 11.24 11.24c6.236 0 11.24-5.004 11.24-11.24 0-.743-.072-1.467-.2-2.155H12.24z"/>
                 </svg>
-                Sign In
+                <span className="signin-text">Sign In</span>
               </button>
             )}
           </div>
@@ -1067,7 +1044,7 @@ export default function Home() {
                     src="/images/krishna_hero.png" 
                     alt="Lord Krishna" 
                     fill 
-                    sizes="(max-width: 768px) 100vw, 200px"
+                    sizes="(max-width: 768px) 130px, 200px"
                     className="hero-image"
                     priority
                 />
@@ -1077,10 +1054,10 @@ export default function Home() {
             
             <div className="language-selector suggestions">
               <div className="suggestion-card" onClick={() => { setLanguage('English'); setShowDailyWisdom(true); }}>
-                <h3 style={{ textAlign: 'center', fontSize: '1.2rem' }}>English</h3>
+                <h3 style={{ textAlign: 'center', fontSize: '1.2rem', justifyContent: 'center' }}>English</h3>
               </div>
               <div className="suggestion-card" onClick={() => { setLanguage('Telugu'); setShowDailyWisdom(true); }}>
-                <h3 style={{ textAlign: 'center', fontSize: '1.2rem' }}>తెలుగు (Telugu)</h3>
+                <h3 style={{ textAlign: 'center', fontSize: '1.2rem', justifyContent: 'center' }}>తెలుగు (Telugu)</h3>
               </div>
             </div>
           </div>
@@ -1091,7 +1068,7 @@ export default function Home() {
                     src="/images/krishna_hero.png" 
                     alt="Lord Krishna" 
                     fill 
-                    sizes="(max-width: 768px) 100vw, 200px"
+                    sizes="(max-width: 768px) 130px, 200px"
                     className="hero-image"
                     priority
                 />
@@ -1100,40 +1077,14 @@ export default function Home() {
             <p>Explore the eternal wisdom of the Bhagavad Gita. Seek guidance for life's challenges or find specific verses to illuminate your path.</p>
             
             {status !== 'loading' && !session && (
-              <div 
-                style={{
-                  background: 'rgba(255, 179, 0, 0.03)',
-                  border: '1px dashed rgba(255, 179, 0, 0.2)',
-                  borderRadius: '16px',
-                  padding: '1rem',
-                  maxWidth: '760px',
-                  width: '100%',
-                  margin: '0 auto 1.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                  textAlign: 'left'
-                }}
-              >
-                <div>
-                  <h4 style={{ color: 'var(--accent-gold)', marginBottom: '0.2rem', fontSize: '0.95rem', fontFamily: 'var(--font-heading)' }}>Save Your Spiritual Journey</h4>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0, lineHeight: 1.4 }}>Sign in with Google to automatically back up your conversations and access your chat history from any device.</p>
+              <div className="auth-backup-banner">
+                <div className="auth-backup-content">
+                  <h4 className="auth-backup-title">Save Your Spiritual Journey</h4>
+                  <p className="auth-backup-desc">Sign in with Google to automatically back up your conversations and access your chat history from any device.</p>
                 </div>
                 <button
                   onClick={() => signIn('google')}
-                  style={{
-                    background: 'var(--accent-gold)',
-                    color: '#060913',
-                    border: 'none',
-                    padding: '8px 16px',
-                    borderRadius: '10px',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.2s'
-                  }}
+                  className="auth-backup-btn"
                 >
                   Sign In with Google
                 </button>
@@ -1141,7 +1092,7 @@ export default function Home() {
             )}
             
             {dailySloka && showDailyWisdom && (
-              <div className="daily-sloka-card" style={{ position: 'relative' }}>
+              <div className="daily-sloka-card">
                 <button 
                   onClick={() => setShowDailyWisdom(false)}
                   className="daily-sloka-close"
@@ -1210,6 +1161,11 @@ export default function Home() {
                 </div>
               ))}
             </div>
+
+            <ChapterRoadmap 
+              language={language} 
+              onSelectVerse={handleSelectVerse} 
+            />
           </div>
         ) : (
           <div id="chat-messages-container" className="chat-messages">
@@ -1219,13 +1175,8 @@ export default function Home() {
                   {msg.role === 'bot' ? '🪈' : '👤'}
                 </div>
                 <div className="message-content">
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    marginBottom: '0.4rem' 
-                  }}>
-                    <span style={{ 
+                  <div className="message-header">
+                    <span className="message-sender-name" style={{ 
                       fontWeight: 600, 
                       fontSize: '0.85rem', 
                       color: msg.role === 'bot' ? 'var(--accent-gold)' : 'var(--text-muted)' 
@@ -1233,29 +1184,7 @@ export default function Home() {
                       {msg.role === 'bot' ? "Krishna's Wisdom" : 'You'}
                     </span>
                     {msg.role === 'bot' && (
-                      <div className="message-actions" style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => handleSpeakMessage(msg.content, true, i)}
-                          className={`speech-btn ${speakingMsgIndex === i && speakingType === 'sanskrit' ? 'active' : ''}`}
-                          title="Pronounce Sanskrit Sloka"
-                        >
-                          {speakingMsgIndex === i && speakingType === 'sanskrit' ? (
-                            <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Sloka</span></>
-                          ) : (
-                            <><span className="btn-icon">🪈</span> <span className="btn-text">Pronounce Sloka</span></>
-                          )}
-                        </button>
-                        <button
-                          onClick={() => handleSpeakMessage(msg.content, false, i)}
-                          className={`speech-btn ${speakingMsgIndex === i && speakingType === 'explanation' ? 'active' : ''}`}
-                          title="Listen to translation and explanation"
-                        >
-                          {speakingMsgIndex === i && speakingType === 'explanation' ? (
-                            <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Explanation</span></>
-                          ) : (
-                            <><span className="btn-icon">🔊</span> <span className="btn-text">Listen Explanation</span></>
-                          )}
-                        </button>
+                      <div className="message-actions">
                         <button
                           onClick={() => {
                             const sanskrit = extractSanskritForCard(msg.content);
@@ -1287,15 +1216,15 @@ export default function Home() {
 
         {language && (
           <div className="input-container">
-            <div className="input-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: '0.75rem', padding: '1rem 1.5rem', borderRadius: '24px' }}>
+            <div className="input-wrapper">
               {showContextInput && (
-                <div className="context-row" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '0.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--accent-gold)' }}>Custom Grounding Context / Background Info</span>
+                <div className="context-row">
+                  <div className="context-header">
+                    <span className="context-title">Custom Grounding Context / Background Info</span>
                     {customContext.trim() && (
                       <button 
                         onClick={() => setCustomContext('')}
-                        style={{ background: 'transparent', border: 'none', color: 'var(--saffron)', fontSize: '0.75rem', cursor: 'pointer' }}
+                        className="context-clear-btn"
                       >
                         Clear Context
                       </button>
@@ -1303,19 +1232,6 @@ export default function Home() {
                   </div>
                   <textarea
                     className="context-textarea-inline"
-                    style={{
-                      width: '100%',
-                      height: '60px',
-                      background: 'rgba(0, 0, 0, 0.2)',
-                      border: '1px solid var(--glass-border)',
-                      borderRadius: '8px',
-                      padding: '0.5rem 0.75rem',
-                      color: 'var(--text-main)',
-                      fontFamily: 'var(--font-content)',
-                      fontSize: '0.85rem',
-                      resize: 'none',
-                      outline: 'none'
-                    }}
                     placeholder="Tell Krishna about your background or situation for personalized guidance..."
                     value={customContext}
                     onChange={(e) => setCustomContext(e.target.value)}
@@ -1323,38 +1239,15 @@ export default function Home() {
                 </div>
               )}
               
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div className="input-controls-row">
                 <button 
                   className={`context-toggle-btn ${showContextInput ? 'active' : ''}`}
                   onClick={() => setShowContextInput(!showContextInput)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: showContextInput || customContext.trim() ? 'var(--accent-gold)' : 'var(--text-muted)',
-                    cursor: 'pointer',
-                    fontSize: '1.2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '4px',
-                    borderRadius: '50%',
-                    transition: 'all 0.2s',
-                    position: 'relative'
-                  }}
                   title="Add Custom Grounding Context"
                 >
                   📜
                   {customContext.trim() && !showContextInput && (
-                    <span style={{
-                      position: 'absolute',
-                      top: '-2px',
-                      right: '-2px',
-                      width: '8px',
-                      height: '8px',
-                      borderRadius: '50%',
-                      background: 'var(--accent-gold)',
-                      boxShadow: '0 0 8px var(--accent-gold)'
-                    }} />
+                    <span className="context-indicator" />
                   )}
                 </button>
                 
@@ -1363,6 +1256,7 @@ export default function Home() {
                   placeholder="Ask about a sloka or share how you feel..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  rows={1}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -1371,14 +1265,14 @@ export default function Home() {
                   }}
                 />
                 
-                <button className="send-btn" onClick={() => handleSend()}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <button className="send-btn" onClick={() => handleSend()} aria-label="Send message">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                   </svg>
                 </button>
               </div>
             </div>
-            <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.8rem' }}>
+            <div className="disclaimer-text">
               Gita-GPT can provide spiritual guidance but is not a substitute for professional mental health support.
             </div>
           </div>

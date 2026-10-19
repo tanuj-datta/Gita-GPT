@@ -11,19 +11,50 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const [bgMusicPlaying, setBgMusicPlayingState] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playerRef = useRef<HTMLDivElement | null>(null);
+  const ytPlayer = useRef<any>(null);
 
-  // Sync with localStorage on client mount
+  // Load YouTube IFrame API and initialize player
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('bg_music_playing');
-      if (saved === 'true') {
-        setBgMusicPlayingState(true);
-      }
-    } catch (e) {
-      console.warn("Could not read from localStorage:", e);
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    if (firstScriptTag && firstScriptTag.parentNode) {
+      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
     }
+    // This function will be called by the YouTube API
+    (window as any).onYouTubeIframeAPIReady = () => {
+      ytPlayer.current = new (window as any).YT.Player('yt-player', {
+        height: '0',
+        width: '0',
+        videoId: '_3PmWQ0lENE',
+        events: {
+          onReady: (event: any) => {
+            // Unmute and set a louder volume for background music
+            event.target.unMute();
+            event.target.setVolume(60);
+            playerReady.current = true;
+            // If user already toggled playback before ready, apply it now
+            if (pendingPlay.current) {
+              event.target.playVideo();
+            } else {
+              // Ensure paused initially
+              event.target.pauseVideo();
+            }
+          },
+        },
+      });
+    };
+    // Cleanup on unmount
+    return () => {
+      if ((window as any).YT && ytPlayer.current) {
+        ytPlayer.current.destroy();
+      }
+    };
   }, []);
+
+  const playerReady = useRef(false);
+  const pendingPlay = useRef(false);
 
   const setBgMusicPlaying = (playing: boolean) => {
     setBgMusicPlayingState(playing);
@@ -32,40 +63,30 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.warn("Could not write to localStorage:", e);
     }
+    // Control YouTube player playback
+    if (ytPlayer.current && playerReady.current) {
+      if (playing) {
+        ytPlayer.current.playVideo();
+      } else {
+        ytPlayer.current.pauseVideo();
+      }
+    } else {
+      // Player not ready yet – remember what the user wants
+      pendingPlay.current = playing;
+    }
   };
 
-  // Play/pause the audio element based on state
-  useEffect(() => {
-    if (audioRef.current) {
-      if (bgMusicPlaying) {
-        audioRef.current.play().catch(e => {
-          console.warn("Audio autoplay blocked or failed:", e);
-          // Auto-play might be blocked by browser until user interaction.
-          // We keep the state playing=true so it plays once they interact,
-          // or we can fallback to pause. Let's just catch it.
-        });
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [bgMusicPlaying]);
+  // Synchronize YouTube player with bgMusicPlaying state (handled in setBgMusicPlaying)
+  // No additional effect needed here.
 
-  // Set initial volume on mount
-  useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = 0.12; // 12% volume for soft background flute music
-    }
-  }, []);
+  // Initial volume is handled by YouTube player (setVolume in onReady).
+
 
   return (
     <AudioContext.Provider value={{ bgMusicPlaying, setBgMusicPlaying }}>
       {children}
-      <audio 
-        ref={audioRef} 
-        src="/audio/monsoon_whispers.m4a" 
-        loop 
-        preload="auto"
-      />
+      {/* Hidden YouTube player for background flute music */}
+      <div id="yt-player" ref={playerRef} style={{ display: 'none' }} />
     </AudioContext.Provider>
   );
 }

@@ -8,6 +8,13 @@ export const metadata: Metadata = {
   description: "Experience the wisdom of the Bhagavad Gita through our AI-powered spiritual guide.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#060913",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
