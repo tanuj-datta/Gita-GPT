@@ -1,13 +1,13 @@
-import { PrismaClient as PrismaClientClass } from '@prisma/client';
-import type { PrismaClient as PrismaClientType } from '@prisma/client';
+import * as PrismaClientNS from '@prisma/client';
+
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClientType | undefined;
+  prisma: PrismaClientNS.PrismaClient | undefined;
 };
 
-let prismaInstance: PrismaClientType;
+let prismaInstance: PrismaClientNS.PrismaClient;
 
 if (typeof window === 'undefined') {
   const databaseUrl = process.env.DATABASE_URL;
@@ -21,7 +21,7 @@ if (typeof window === 'undefined') {
     
     prismaInstance =
       globalForPrisma.prisma ??
-      new PrismaClientClass({
+      new PrismaClientNS.PrismaClient({
         adapter,
         log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
       });
@@ -33,7 +33,7 @@ if (typeof window === 'undefined') {
     console.warn("⚠️ DATABASE_URL environment variable is missing. Please set it in .env or .env.local.");
     const dummyPool = new Pool();
     const dummyAdapter = new PrismaPg(dummyPool);
-    prismaInstance = new PrismaClientClass({
+    prismaInstance = new PrismaClientNS.PrismaClient({
       adapter: dummyAdapter
     });
   }
