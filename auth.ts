@@ -5,15 +5,26 @@ import { prisma } from "@/lib/prisma";
 
 const hasDatabase = Boolean(process.env.DATABASE_URL);
 
+const googleClientId =
+  process.env.AUTH_GOOGLE_ID ||
+  process.env.GOOGLE_CLIENT_ID ||
+  process.env.GOOGLE_ID;
+
+const googleClientSecret =
+  process.env.AUTH_GOOGLE_SECRET ||
+  process.env.GOOGLE_CLIENT_SECRET ||
+  process.env.GOOGLE_SECRET;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
-  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "",
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   ...(hasDatabase ? { adapter: PrismaAdapter(prisma) } : { session: { strategy: "jwt" as const } }),
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID || process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_SECRET || "",
-    }),
+    Google(
+      googleClientId && googleClientSecret
+        ? { clientId: googleClientId, clientSecret: googleClientSecret }
+        : {}
+    ),
   ],
   callbacks: {
     async session({ session, token, user }) {
