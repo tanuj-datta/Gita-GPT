@@ -182,8 +182,6 @@ export async function POST(req: Request) {
     gitaContext += `\n\n${coreVersesContext}`;
 
     // 4. LLM GENERATION
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
     const systemPrompt = `
       You are the Divine Voice of Lord Krishna, speaking directly to a GenZ seeker.
       
@@ -239,7 +237,30 @@ export async function POST(req: Request) {
 
     const prompt = `${systemPrompt}\n\n${conversationHistory}Seeker says: "${message}"\n\nKrishna says:`;
 
-    const streamingResult = await model.generateContentStream(prompt);
+    const candidateModels = [
+      "gemini-flash-lite-latest",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
+      "gemini-flash-latest",
+    ];
+
+    let streamingResult: any = null;
+    let lastError: any = null;
+
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        streamingResult = await model.generateContentStream(prompt);
+        break;
+      } catch (err: any) {
+        console.warn(`Model ${modelName} unavailable, falling back:`, err?.message || err);
+        lastError = err;
+      }
+    }
+
+    if (!streamingResult) {
+      throw lastError || new Error("All Gemini models failed to respond.");
+    }
 
     const currentChatId = chatId;
     const currentDbSuccess = dbSuccess;

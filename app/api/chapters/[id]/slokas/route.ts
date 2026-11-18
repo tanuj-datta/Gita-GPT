@@ -60,12 +60,12 @@ export async function GET(
     const totalVerses = CHAPTER_VERSE_COUNTS[chapterNum] || 40;
     const chunkSize = 30;
     const slokas: any[] = [];
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-      generationConfig: {
-        responseMimeType: "application/json",
-      }
-    });
+    const candidateModels = [
+      "gemini-flash-lite-latest",
+      "gemini-3.5-flash-lite",
+      "gemini-3.8-flash",
+      "gemini-flash-latest",
+    ];
 
     for (let start = 1; start <= totalVerses; start += chunkSize) {
       const end = Math.min(start + chunkSize - 1, totalVerses);
@@ -85,8 +85,27 @@ export async function GET(
         Return ONLY a valid JSON array of objects. Do not wrap the JSON in markdown code blocks like \`\`\`json.
       `;
 
-      const response = await model.generateContent(prompt);
-      const text = response.response.text();
+      let text = "";
+      let lastErr: any = null;
+      for (const modelName of candidateModels) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: {
+              responseMimeType: "application/json",
+            }
+          });
+          const response = await model.generateContent(prompt);
+          text = response.response.text();
+          if (text) break;
+        } catch (err: any) {
+          console.warn(`Model ${modelName} failed for slokas, trying next:`, err?.message || err);
+          lastErr = err;
+        }
+      }
+      if (!text) {
+        throw lastErr || new Error(`Failed to generate slokas for range ${start}-${end}`);
+      }
       try {
         const chunkSlokas = JSON.parse(text);
         if (Array.isArray(chunkSlokas)) {
