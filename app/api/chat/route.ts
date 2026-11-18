@@ -6,6 +6,9 @@ import fs from 'fs';
 import path from 'path';
 import { auth } from "@/auth";
 
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 export async function POST(req: Request) {
@@ -245,12 +248,14 @@ export async function POST(req: Request) {
     ];
 
     let streamingResult: any = null;
+    let activeModel: any = null;
     let lastError: any = null;
 
     for (const modelName of candidateModels) {
       try {
         const model = genAI.getGenerativeModel({ model: modelName });
         streamingResult = await model.generateContentStream(prompt);
+        activeModel = model;
         break;
       } catch (err: any) {
         console.warn(`Model ${modelName} unavailable, falling back:`, err?.message || err);
@@ -269,28 +274,52 @@ export async function POST(req: Request) {
       async start(controller) {
         let fullContent = "";
         try {
+          if (streamingResult?.response?.catch) {
+            streamingResult.response.catch(() => {});
+          }
+
           for await (const chunk of streamingResult.stream) {
-            const chunkText = chunk.text();
-            fullContent += chunkText;
-            controller.enqueue(new TextEncoder().encode(chunkText));
+            let chunkText = "";
+            try {
+              chunkText = chunk.text();
+            } catch {
+              chunkText = chunk.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            }
+            if (chunkText) {
+              fullContent += chunkText;
+              controller.enqueue(new TextEncoder().encode(chunkText));
+            }
           }
-          
-          if (currentDbSuccess && currentChatId) {
-            await prisma.message.create({
-              data: {
-                chatId: currentChatId,
-                role: 'bot',
-                content: fullContent,
-              }
-            });
-            await prisma.chat.update({
-              where: { id: currentChatId },
-              data: { updatedAt: new Date() }
-            });
+        } catch (streamErr) {
+          console.warn("Streaming encountered error, attempting fallback generation:", streamErr);
+          if (fullContent.length < 50 && activeModel) {
+            try {
+              const fallbackRes = await activeModel.generateContent(prompt);
+              const fallbackText = fallbackRes.response.text();
+              fullContent = fallbackText;
+              controller.enqueue(new TextEncoder().encode(fallbackText));
+            } catch (fallbackErr) {
+              console.error("Non-streaming fallback also failed:", fallbackErr);
+            }
           }
-        } catch (err) {
-          console.error("Streaming or database saving error:", err);
         } finally {
+          if (currentDbSuccess && currentChatId && fullContent) {
+            try {
+              await prisma.message.create({
+                data: {
+                  chatId: currentChatId,
+                  role: 'bot',
+                  content: fullContent,
+                }
+              });
+              await prisma.chat.update({
+                where: { id: currentChatId },
+                data: { updatedAt: new Date() }
+              });
+            } catch (saveErr) {
+              console.error("Database save error:", saveErr);
+            }
+          }
           controller.close();
         }
       },
