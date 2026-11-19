@@ -25,9 +25,7 @@ export default function Home() {
 
   // Background Music from global context and local TTS States
   const { bgMusicPlaying, setBgMusicPlaying } = useAudio();
-  const [speakingMsgIndex, setSpeakingMsgIndex] = useState<number | null>(null);
-  const [speakingType, setSpeakingType] = useState<'sanskrit' | 'explanation' | null>(null);
-  const [speakingDaily, setSpeakingDaily] = useState<'sanskrit' | 'translation' | null>(null);
+  const [speakingTranslation, setSpeakingTranslation] = useState(false);
 
   // Database Chat State
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -117,155 +115,44 @@ export default function Home() {
   useEffect(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
-      setSpeakingMsgIndex(null);
-      setSpeakingType(null);
-      setSpeakingDaily(null);
+      setSpeakingTranslation(false);
     }
   }, [activeChatId]);
 
-  // Extract Sanskrit Devanagari lines or fallback to transliterated text
-  const extractSanskrit = (content: string): string => {
-    const devanagariRegex = /[\u0900-\u097F]/;
-    const latinRegex = /[a-zA-Z]/;
-    const teluguRegex = /[\u0c00-\u0c7f]/;
-    const lines = content.split('\n');
-    const sanskritLines = lines.filter(line => {
-      const trimmed = line.trim();
-      return devanagariRegex.test(trimmed) && !latinRegex.test(trimmed) && !teluguRegex.test(trimmed);
-    });
-    
-    if (sanskritLines.length > 0) {
-      return sanskritLines.join(' ').replace(/[*#_]/g, '').trim();
-    }
-    
-    // Fallback: search for verse lines between Chapter/Verse citation and Translation/Meaning
-    const citationIndex = lines.findIndex(l => l.includes('Chapter') || l.includes('Verse'));
-    const meaningIndex = lines.findIndex(l => l.toLowerCase().includes('meaning') || l.toLowerCase().includes('translation'));
-    
-    if (citationIndex !== -1 && meaningIndex !== -1 && meaningIndex > citationIndex + 1) {
-      return lines.slice(citationIndex + 1, meaningIndex).join(' ').replace(/[*#_]/g, '').trim();
-    }
-    
-    return lines.slice(0, 2).join(' ').replace(/[*#_]/g, '').trim();
-  };
-
-  // Speak bot message content using Web Speech API
-  const handleSpeakMessage = (content: string, isSanskrit: boolean, index: number) => {
+  const handleSpeakTranslation = (translation: string) => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
-    if (speakingMsgIndex === index && speakingType === (isSanskrit ? 'sanskrit' : 'explanation')) {
+    if (speakingTranslation) {
       window.speechSynthesis.cancel();
-      setSpeakingMsgIndex(null);
-      setSpeakingType(null);
+      setSpeakingTranslation(false);
       return;
     }
 
     window.speechSynthesis.cancel();
-    setSpeakingDaily(null); // Reset daily sloka voice state if playing
 
-    let textToSpeak = '';
-    if (isSanskrit) {
-      textToSpeak = extractSanskrit(content);
-      if (!textToSpeak) {
-        textToSpeak = content; // Fallback
-      }
-    } else {
-      // For translation/explanation, filter out Devanagari lines
-      const devanagariRegex = /[\u0900-\u097F]/;
-      const lines = content.split('\n');
-      const nonSanskritLines = lines.filter(line => !devanagariRegex.test(line));
-      textToSpeak = nonSanskritLines.join('\n').replace(/[*#_]/g, '').trim();
-    }
-
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    const utterance = new SpeechSynthesisUtterance(translation);
     const voices = window.speechSynthesis.getVoices();
 
-    if (isSanskrit) {
-      // Find a Hindi voice (hi-IN) or Indian English voice (en-IN) for accurate Sanskrit phonetics
-      const hindiVoice = voices.find(v => v.lang.startsWith('hi-') || v.lang.startsWith('sa-'))
-                        || voices.find(v => v.lang.startsWith('en-IN'));
-      if (hindiVoice) {
-        utterance.voice = hindiVoice;
-      }
-      utterance.rate = 0.78; // Slower, rhythmic flow for slokas
-      utterance.pitch = 0.95; // Steady, resonant pitch
-    } else {
-      // Search for English/Telugu voices
-      const targetPrefix = language === 'Telugu' ? 'te-IN' : 'en-';
-      const langVoice = voices.find(v => v.lang.startsWith(targetPrefix))
-                        || voices.find(v => v.lang.startsWith('en-IN'))
-                        || voices.find(v => v.lang.startsWith('en-'));
-      if (langVoice) {
-        utterance.voice = langVoice;
-      }
-      utterance.rate = 0.92;
-      utterance.pitch = 1.0;
+    const targetPrefix = language === 'Telugu' ? 'te-IN' : 'en-';
+    const langVoice = voices.find(v => v.lang.startsWith(targetPrefix))
+                      || voices.find(v => v.lang.startsWith('en-IN'))
+                      || voices.find(v => v.lang.startsWith('en-'));
+    if (langVoice) {
+      utterance.voice = langVoice;
     }
+    utterance.rate = 0.92;
+    utterance.pitch = 1.0;
 
     utterance.onend = () => {
-      setSpeakingMsgIndex(null);
-      setSpeakingType(null);
+      setSpeakingTranslation(false);
     };
 
     utterance.onerror = (e) => {
       console.error("Speech Synthesis error:", e);
-      setSpeakingMsgIndex(null);
-      setSpeakingType(null);
+      setSpeakingTranslation(false);
     };
 
-    setSpeakingMsgIndex(index);
-    setSpeakingType(isSanskrit ? 'sanskrit' : 'explanation');
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const handleSpeakDaily = (sanskrit: string, translation: string, isSanskrit: boolean) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-
-    const targetType = isSanskrit ? 'sanskrit' : 'translation';
-    if (speakingDaily === targetType) {
-      window.speechSynthesis.cancel();
-      setSpeakingDaily(null);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    setSpeakingMsgIndex(null);
-    setSpeakingType(null);
-
-    const textToSpeak = isSanskrit ? sanskrit : translation;
-    const utterance = new SpeechSynthesisUtterance(textToSpeak);
-    const voices = window.speechSynthesis.getVoices();
-
-    if (isSanskrit) {
-      const hindiVoice = voices.find(v => v.lang.startsWith('hi-') || v.lang.startsWith('sa-'))
-                        || voices.find(v => v.lang.startsWith('en-IN'));
-      if (hindiVoice) {
-        utterance.voice = hindiVoice;
-      }
-      utterance.rate = 0.78;
-      utterance.pitch = 0.95;
-    } else {
-      const targetPrefix = language === 'Telugu' ? 'te-IN' : 'en-';
-      const langVoice = voices.find(v => v.lang.startsWith(targetPrefix))
-                        || voices.find(v => v.lang.startsWith('en-IN'))
-                        || voices.find(v => v.lang.startsWith('en-'));
-      if (langVoice) {
-        utterance.voice = langVoice;
-      }
-      utterance.rate = 0.92;
-      utterance.pitch = 1.0;
-    }
-
-    utterance.onend = () => {
-      setSpeakingDaily(null);
-    };
-
-    utterance.onerror = (e) => {
-      console.error("Speech Synthesis error:", e);
-      setSpeakingDaily(null);
-    };
-
-    setSpeakingDaily(targetType);
+    setSpeakingTranslation(true);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -787,8 +674,7 @@ export default function Home() {
 
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
-      setSpeakingMsgIndex(null);
-      setSpeakingType(null);
+      setSpeakingTranslation(false);
     }
 
     if (isLanding) setIsLanding(false);
@@ -962,9 +848,7 @@ export default function Home() {
                 if (typeof window !== 'undefined' && window.speechSynthesis) {
                   window.speechSynthesis.cancel();
                 }
-                setSpeakingMsgIndex(null);
-                setSpeakingType(null);
-                setSpeakingDaily(null);
+                setSpeakingTranslation(false);
               }}
             >
               <span className="logo-title">Gita-GPT</span>
@@ -1116,22 +1000,11 @@ export default function Home() {
                 </blockquote>
                 <div className="daily-sloka-actions">
                   <button
-                    onClick={() => handleSpeakDaily(dailySloka.sanskrit, language === 'Telugu' ? dailySloka.telugu : dailySloka.english, true)}
-                    className={`daily-action-btn ${speakingDaily === 'sanskrit' ? 'active' : ''}`}
-                    title="Pronounce Sanskrit Sloka"
-                  >
-                    {speakingDaily === 'sanskrit' ? (
-                      <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Pronunciation</span></>
-                    ) : (
-                      <><span className="btn-icon">🪈</span> <span className="btn-text">Pronounce Sloka</span></>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleSpeakDaily(dailySloka.sanskrit, language === 'Telugu' ? dailySloka.telugu : dailySloka.english, false)}
-                    className={`daily-action-btn ${speakingDaily === 'translation' ? 'active' : ''}`}
+                    onClick={() => handleSpeakTranslation(language === 'Telugu' ? dailySloka.telugu : dailySloka.english)}
+                    className={`daily-action-btn ${speakingTranslation ? 'active' : ''}`}
                     title="Listen to Translation"
                   >
-                    {speakingDaily === 'translation' ? (
+                    {speakingTranslation ? (
                       <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Translation</span></>
                     ) : (
                       <><span className="btn-icon">🔊</span> <span className="btn-text">Listen Translation</span></>
