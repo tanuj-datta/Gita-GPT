@@ -22,6 +22,7 @@ export default function Home() {
   const [customContext, setCustomContext] = useState('');
   const [showContextInput, setShowContextInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Background Music from global context and local TTS States
   const { bgMusicPlaying, setBgMusicPlaying } = useAudio();
@@ -64,6 +65,16 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Auto-expand textarea based on content like modern chat interfaces
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const targetHeight = Math.min(Math.max(scrollHeight, 24), 220);
+      textareaRef.current.style.height = `${targetHeight}px`;
+    }
+  }, [input]);
 
   // Handle speech initialization
   useEffect(() => {
@@ -688,6 +699,9 @@ export default function Home() {
       return nextMsgs;
     });
     setInput('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
     setIsTyping(true);
 
     try {
@@ -1125,6 +1139,7 @@ export default function Home() {
                 </button>
                 
                 <textarea 
+                  ref={textareaRef}
                   className="chat-input"
                   placeholder="Ask about a sloka or share how you feel..."
                   value={input}
