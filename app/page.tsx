@@ -1078,86 +1078,21 @@ export default function Home() {
         {isLanding ? (
           <div className="landing">
             <div className="hero-image-wrapper">
-                {/* Enhanced Sacred Crown Peacock Feather (Mayur Pankh) directly on top of Krishna's Image */}
+                {/* User-Added Sacred Crown Peacock Feather (Mayur Pankh) */}
                 <div 
                   className="hero-crown-feather"
-                  title="Lord Krishna's Divine Peacock Feather • Click for temple chime"
+                  title="Lord Krishna's Sacred Peacock Feather • Click to chime"
                   onClick={playTempleChime}
                 >
                   <div className="feather-halo-glow" />
-                  <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-                    {/* Outer radiant plume vanes */}
-                    <path 
-                      d="M50 8C35 24 16 45 22 72C26 88 44 98 56 94C72 88 84 65 74 38C68 24 58 14 50 8Z" 
-                      fill="url(#outerPlumeGrad)" 
-                      opacity="0.95"
-                    />
-                    
-                    {/* Fine barbules fan */}
-                    <path d="M50 12C38 28 24 46 28 68" stroke="url(#barbuleGrad)" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
-                    <path d="M50 15C62 30 76 48 72 70" stroke="url(#barbuleGrad)" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
-                    <path d="M50 25C32 40 22 58 26 76" stroke="url(#barbuleGrad)" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
-                    <path d="M50 25C68 40 78 58 74 76" stroke="url(#barbuleGrad)" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
-                    <path d="M50 38C36 50 28 66 32 82" stroke="url(#barbuleGrad)" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
-                    <path d="M50 38C64 50 72 66 68 82" stroke="url(#barbuleGrad)" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
-                    
-                    {/* Peacock Eye (Ocellus) - Layer 1: Golden Amber Halo */}
-                    <ellipse cx="50" cy="58" rx="20" ry="25" fill="url(#eyeAmberGrad)" />
-                    
-                    {/* Peacock Eye - Layer 2: Emerald Teal Ring */}
-                    <ellipse cx="50" cy="60" rx="15" ry="19" fill="url(#eyeEmeraldGrad)" />
-                    
-                    {/* Peacock Eye - Layer 3: Vibrant Royal Blue Ring */}
-                    <ellipse cx="50" cy="62" rx="10.5" ry="13.5" fill="url(#eyeRoyalBlueGrad)" />
-                    
-                    {/* Peacock Eye - Layer 4: Deep Midnight Indigo Pupil */}
-                    <circle cx="50" cy="63.5" r="5.5" fill="#1e1b4b" />
-                    
-                    {/* Divine Celestial Light Reflection Highlight */}
-                    <ellipse cx="48" cy="61" rx="2" ry="1.4" fill="#ffffff" opacity="0.85" />
-                    <circle cx="53" cy="65" r="0.9" fill="#ffffff" opacity="0.65" />
-                    
-                    {/* Central Golden Spine / Shaft (Rachis) */}
-                    <path d="M50 8C49 35 46 75 36 112" stroke="url(#shaftGoldGrad)" strokeWidth="2.5" strokeLinecap="round" />
-                    <path d="M50 8C49 35 46 75 36 112" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" opacity="0.6" />
-
-                    <defs>
-                      <linearGradient id="outerPlumeGrad" x1="20" y1="10" x2="80" y2="95" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#0d9488" />
-                        <stop offset="0.35" stopColor="#059669" />
-                        <stop offset="0.7" stopColor="#0284c7" />
-                        <stop offset="1" stopColor="#312e81" />
-                      </linearGradient>
-                      <linearGradient id="barbuleGrad" x1="30" y1="10" x2="70" y2="80" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#fbbf24" />
-                        <stop offset="0.5" stopColor="#34d399" />
-                        <stop offset="1" stopColor="#38bdf8" />
-                      </linearGradient>
-                      <radialGradient id="eyeAmberGrad" cx="50" cy="58" r="25" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#fbbf24" />
-                        <stop offset="0.6" stopColor="#f59e0b" />
-                        <stop offset="0.85" stopColor="#b45309" />
-                        <stop offset="1" stopColor="#059669" />
-                      </radialGradient>
-                      <radialGradient id="eyeEmeraldGrad" cx="50" cy="60" r="19" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#10b981" />
-                        <stop offset="0.65" stopColor="#0d9488" />
-                        <stop offset="1" stopColor="#0369a1" />
-                      </radialGradient>
-                      <radialGradient id="eyeRoyalBlueGrad" cx="50" cy="62" r="13.5" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#38bdf8" />
-                        <stop offset="0.4" stopColor="#0284c7" />
-                        <stop offset="0.85" stopColor="#4338ca" />
-                        <stop offset="1" stopColor="#1e1b4b" />
-                      </radialGradient>
-                      <linearGradient id="shaftGoldGrad" x1="50" y1="8" x2="36" y2="112" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#fef08a" />
-                        <stop offset="0.3" stopColor="#f59e0b" />
-                        <stop offset="0.8" stopColor="#d97706" />
-                        <stop offset="1" stopColor="#92400e" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
+                  <Image
+                    src="/images/peacock_feather.png"
+                    alt="Lord Krishna Sacred Peacock Feather"
+                    width={90}
+                    height={90}
+                    className="crown-feather-img"
+                    priority
+                  />
                 </div>
 
                 <Image 

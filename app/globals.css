@@ -179,45 +179,53 @@ body {
 /* Enhanced Sacred Peacock Feather on top of Krishna's Image */
 .hero-crown-feather {
   position: absolute;
-  top: -46px;
+  top: -55px;
   left: 50%;
-  transform: translateX(-42%) rotate(15deg);
-  width: 76px;
-  height: 86px;
+  transform: translateX(-48%) rotate(8deg);
+  width: 90px;
+  height: 90px;
   z-index: 10;
   cursor: pointer;
   pointer-events: auto;
-  filter: drop-shadow(0 0 16px rgba(20, 184, 166, 0.75)) drop-shadow(0 0 24px rgba(245, 176, 39, 0.6));
+  filter: drop-shadow(0 0 16px rgba(20, 184, 166, 0.7)) drop-shadow(0 0 24px rgba(245, 176, 39, 0.55));
   animation: crownFeatherSway 6s ease-in-out infinite alternate;
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
   transform-origin: bottom center;
 }
 
 .hero-crown-feather:hover {
-  transform: translateX(-42%) rotate(22deg) scale(1.15);
+  transform: translateX(-48%) rotate(16deg) scale(1.15);
   filter: drop-shadow(0 0 28px rgba(20, 184, 166, 0.95)) drop-shadow(0 0 35px rgba(245, 176, 39, 0.85));
+}
+
+.crown-feather-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
 }
 
 @keyframes crownFeatherSway {
   0% {
-    transform: translateX(-42%) rotate(12deg) translateY(0);
+    transform: translateX(-48%) rotate(5deg) translateY(0);
   }
   50% {
-    transform: translateX(-42%) rotate(18deg) translateY(-5px);
+    transform: translateX(-48%) rotate(12deg) translateY(-6px);
   }
   100% {
-    transform: translateX(-42%) rotate(9deg) translateY(-2px);
+    transform: translateX(-48%) rotate(3deg) translateY(-2px);
   }
 }
 
 .feather-halo-glow {
   position: absolute;
-  top: 15%;
-  left: 20%;
-  width: 60%;
-  height: 60%;
+  top: 10%;
+  left: 15%;
+  width: 70%;
+  height: 70%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(245, 176, 39, 0.35) 0%, rgba(20, 184, 166, 0.25) 50%, transparent 75%);
+  background: radial-gradient(circle, rgba(245, 176, 39, 0.38) 0%, rgba(20, 184, 166, 0.28) 45%, transparent 75%);
   filter: blur(14px);
   pointer-events: none;
   animation: haloPulse 3.5s ease-in-out infinite alternate;
@@ -1816,9 +1824,9 @@ h1, h2, h3, h4, h5, h6,
   }
 
   .hero-crown-feather {
-    top: -34px;
-    width: 56px;
-    height: 64px;
+    top: -42px;
+    width: 68px;
+    height: 68px;
   }
 
   .landing h1 {
