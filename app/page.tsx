@@ -24,9 +24,16 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Background Music from global context and local TTS States
+  // Background Music from global context
   const { bgMusicPlaying, setBgMusicPlaying } = useAudio();
-  const [speakingTranslation, setSpeakingTranslation] = useState(false);
+
+  // Krishna Neural Voice States (Free Edge Neural TTS)
+  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
+  const [autoVoiceEnabled, setAutoVoiceEnabled] = useState<boolean>(false);
+  const autoVoiceRef = useRef<boolean>(false);
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const audioCacheRef = useRef<Map<string, string>>(new Map());
 
   // Database Chat State
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -76,19 +83,106 @@ export default function Home() {
     }
   }, [input]);
 
-  // Handle speech initialization
+  // Sync autoVoiceRef with state and restore preference from localStorage
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const handleVoicesChanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-      window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
-      window.speechSynthesis.getVoices(); // Force load voices
+    autoVoiceRef.current = autoVoiceEnabled;
+  }, [autoVoiceEnabled]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('krishna_auto_voice');
+      if (saved === 'true') {
+        setAutoVoiceEnabled(true);
+        autoVoiceRef.current = true;
+      }
+    } catch {}
+  }, []);
+
+  const toggleAutoVoice = () => {
+    setAutoVoiceEnabled((prev) => {
+      const next = !prev;
+      autoVoiceRef.current = next;
+      try {
+        localStorage.setItem('krishna_auto_voice', next ? 'true' : 'false');
+      } catch {}
+      return next;
+    });
+  };
+
+  // Stop Krishna neural speech playback
+  const stopKrishnaVoice = () => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
+      audioPlayerRef.current = null;
+    }
+    setPlayingAudioId(null);
+    setLoadingAudioId(null);
+  };
+
+  // Play serene Krishna neural voice
+  const playKrishnaVoice = async (text: string, id: string) => {
+    if (!text || !text.trim()) return;
+
+    // If currently playing this same item, toggle pause
+    if (playingAudioId === id) {
+      stopKrishnaVoice();
+      return;
     }
 
+    // Stop any existing speech
+    stopKrishnaVoice();
+    setLoadingAudioId(id);
+
+    try {
+      const cacheKey = `${language || 'auto'}:${text.trim().substring(0, 100)}`;
+      let audioUrl = audioCacheRef.current.get(cacheKey);
+
+      if (!audioUrl) {
+        const res = await fetch('/api/voice', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, language }),
+        });
+
+        if (!res.ok) {
+          throw new Error(`Voice synthesis failed: ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        audioUrl = URL.createObjectURL(blob);
+        audioCacheRef.current.set(cacheKey, audioUrl);
+      }
+
+      setLoadingAudioId(null);
+      setPlayingAudioId(id);
+
+      const audio = new Audio(audioUrl);
+      audioPlayerRef.current = audio;
+
+      audio.onended = () => {
+        setPlayingAudioId(null);
+        audioPlayerRef.current = null;
+      };
+
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        setPlayingAudioId(null);
+        audioPlayerRef.current = null;
+      };
+
+      await audio.play();
+    } catch (err) {
+      console.error('Failed to synthesize or play Krishna voice:', err);
+      setLoadingAudioId(null);
+      setPlayingAudioId(null);
+      audioPlayerRef.current = null;
+    }
+  };
+
+  // Daily Wisdom selection & cleanup
+  useEffect(() => {
     // Select a random powerful sloka on the client side only to avoid hydration mismatches
-    // The selection is pseudo-randomized daily based on the current calendar date seed,
-    // ensuring a fresh random sloka everyday that remains stable throughout the day.
     const allSlokas: any[] = [];
     gitaData.chapters.forEach((chap: any) => {
       chap.slokas.forEach((s: any) => {
@@ -106,7 +200,6 @@ export default function Home() {
       const d = today.getDate();
       // Seed formula: YYYYMMDD
       const seed = y * 10000 + m * 100 + d;
-      // Linear Congruential Generator (LCG) parameters to produce pseudorandom numbers
       const a = 1664525;
       const c = 1013904223;
       const m_val = Math.pow(2, 32);
@@ -116,56 +209,14 @@ export default function Home() {
     }
 
     return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      stopKrishnaVoice();
     };
   }, []);
 
-  // Stop current speech playback if chat changes or component unmounts
+  // Stop current voice playback if chat changes or component unmounts
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      setSpeakingTranslation(false);
-    }
+    stopKrishnaVoice();
   }, [activeChatId]);
-
-  const handleSpeakTranslation = (translation: string) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-
-    if (speakingTranslation) {
-      window.speechSynthesis.cancel();
-      setSpeakingTranslation(false);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(translation);
-    const voices = window.speechSynthesis.getVoices();
-
-    const targetPrefix = language === 'Telugu' ? 'te-IN' : 'en-';
-    const langVoice = voices.find(v => v.lang.startsWith(targetPrefix))
-                      || voices.find(v => v.lang.startsWith('en-IN'))
-                      || voices.find(v => v.lang.startsWith('en-'));
-    if (langVoice) {
-      utterance.voice = langVoice;
-    }
-    utterance.rate = 0.92;
-    utterance.pitch = 1.0;
-
-    utterance.onend = () => {
-      setSpeakingTranslation(false);
-    };
-
-    utterance.onerror = (e) => {
-      console.error("Speech Synthesis error:", e);
-      setSpeakingTranslation(false);
-    };
-
-    setSpeakingTranslation(true);
-    window.speechSynthesis.speak(utterance);
-  };
 
   const extractSanskritForCard = (content: string): string => {
     const devanagariRegex = /[\u0900-\u097F]/;
@@ -683,10 +734,7 @@ export default function Home() {
   const handleSend = async (text: string = input) => {
     if (!text.trim()) return;
 
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel();
-      setSpeakingTranslation(false);
-    }
+    stopKrishnaVoice();
 
     if (isLanding) setIsLanding(false);
 
@@ -766,6 +814,11 @@ export default function Home() {
             saveChatLocally(activeIdToUse, prev, language || 'English', customContext);
             return prev;
           });
+        }
+
+        // Auto-play Krishna's peaceful voice if auto voice is enabled
+        if (autoVoiceRef.current && fullContent) {
+          playKrishnaVoice(fullContent, `msg-auto-${Date.now()}`);
         }
       }
 
@@ -859,10 +912,7 @@ export default function Home() {
                 setIsLanding(true);
                 setMessages([]);
                 setShowDailyWisdom(true);
-                if (typeof window !== 'undefined' && window.speechSynthesis) {
-                  window.speechSynthesis.cancel();
-                }
-                setSpeakingTranslation(false);
+                stopKrishnaVoice();
               }}
             >
               <span className="logo-title">Gita-GPT</span>
@@ -872,6 +922,14 @@ export default function Home() {
           </div>
           
           <div className="header-right">
+            <button
+              onClick={toggleAutoVoice}
+              className={`music-toggle-btn auto-voice-btn ${autoVoiceEnabled ? 'playing' : ''}`}
+              title={autoVoiceEnabled ? "Krishna Voice Auto-speak: ON" : "Krishna Voice Auto-speak: OFF"}
+            >
+              <span>{autoVoiceEnabled ? '🎙️' : '🔈'}</span>
+              <span className="music-btn-text">{autoVoiceEnabled ? 'Voice: ON' : 'Auto Voice'}</span>
+            </button>
             <button
               onClick={() => setBgMusicPlaying(!bgMusicPlaying)}
               className={`music-toggle-btn ${bgMusicPlaying ? 'playing' : ''}`}
@@ -1014,12 +1072,22 @@ export default function Home() {
                 </blockquote>
                 <div className="daily-sloka-actions">
                   <button
-                    onClick={() => handleSpeakTranslation(language === 'Telugu' ? dailySloka.telugu : dailySloka.english)}
-                    className={`daily-action-btn ${speakingTranslation ? 'active' : ''}`}
-                    title="Listen to Translation"
+                    onClick={() => playKrishnaVoice(language === 'Telugu' ? dailySloka.telugu : dailySloka.english, 'daily-sloka')}
+                    className={`daily-action-btn ${playingAudioId === 'daily-sloka' ? 'active' : ''}`}
+                    title="Listen to Krishna's serene voice"
+                    disabled={loadingAudioId === 'daily-sloka'}
                   >
-                    {speakingTranslation ? (
-                      <><span className="btn-icon">⏸️</span> <span className="btn-text">Stop Translation</span></>
+                    {loadingAudioId === 'daily-sloka' ? (
+                      <><span className="btn-icon">⏳</span> <span className="btn-text">Preparing...</span></>
+                    ) : playingAudioId === 'daily-sloka' ? (
+                      <>
+                        <span className="audio-waves voice-waves">
+                          <span className="wave-bar bar-1"></span>
+                          <span className="wave-bar bar-2"></span>
+                          <span className="wave-bar bar-3"></span>
+                        </span>
+                        <span className="btn-text">Pause Voice</span>
+                      </>
                     ) : (
                       <><span className="btn-icon">🔊</span> <span className="btn-text">Listen Translation</span></>
                     )}
@@ -1072,6 +1140,27 @@ export default function Home() {
                     </span>
                     {msg.role === 'bot' && (
                       <div className="message-actions">
+                        <button
+                          onClick={() => playKrishnaVoice(msg.content, `msg-${i}`)}
+                          className={`voice-btn ${playingAudioId === `msg-${i}` ? 'playing' : ''} ${loadingAudioId === `msg-${i}` ? 'loading' : ''}`}
+                          title={playingAudioId === `msg-${i}` ? "Pause Krishna's voice" : "Listen to Krishna's serene voice"}
+                          disabled={loadingAudioId === `msg-${i}`}
+                        >
+                          {loadingAudioId === `msg-${i}` ? (
+                            <><span className="btn-icon">⏳</span> <span className="btn-text">Reflecting...</span></>
+                          ) : playingAudioId === `msg-${i}` ? (
+                            <>
+                              <span className="audio-waves voice-waves">
+                                <span className="wave-bar bar-1"></span>
+                                <span className="wave-bar bar-2"></span>
+                                <span className="wave-bar bar-3"></span>
+                              </span>
+                              <span className="btn-text">Pause</span>
+                            </>
+                          ) : (
+                            <><span className="btn-icon">🔊</span> <span className="btn-text">Listen</span></>
+                          )}
+                        </button>
                         <button
                           onClick={() => {
                             const sanskrit = extractSanskritForCard(msg.content);
