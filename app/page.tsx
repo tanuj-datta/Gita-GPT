@@ -27,14 +27,6 @@ export default function Home() {
   // Background Music from global context
   const { bgMusicPlaying, setBgMusicPlaying } = useAudio();
 
-  // Krishna Neural Voice States (Free Edge Neural TTS)
-  const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
-  const [loadingAudioId, setLoadingAudioId] = useState<string | null>(null);
-  const [autoVoiceEnabled, setAutoVoiceEnabled] = useState<boolean>(false);
-  const autoVoiceRef = useRef<boolean>(false);
-  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
-  const audioCacheRef = useRef<Map<string, string>>(new Map());
-
   // Divine Sanctuary: Particles, Chime & Shifting Quotes
   const particleCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const chimeTriggeredRef = useRef<boolean>(false);
@@ -284,104 +276,7 @@ export default function Home() {
     };
   }, []);
 
-  // Sync autoVoiceRef with state and restore preference from localStorage
-  useEffect(() => {
-    autoVoiceRef.current = autoVoiceEnabled;
-  }, [autoVoiceEnabled]);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('krishna_auto_voice');
-      if (saved === 'true') {
-        setAutoVoiceEnabled(true);
-        autoVoiceRef.current = true;
-      }
-    } catch {}
-  }, []);
-
-  const toggleAutoVoice = () => {
-    setAutoVoiceEnabled((prev) => {
-      const next = !prev;
-      autoVoiceRef.current = next;
-      try {
-        localStorage.setItem('krishna_auto_voice', next ? 'true' : 'false');
-      } catch {}
-      return next;
-    });
-  };
-
-  // Stop Krishna neural speech playback
-  const stopKrishnaVoice = () => {
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.pause();
-      audioPlayerRef.current.currentTime = 0;
-      audioPlayerRef.current = null;
-    }
-    setPlayingAudioId(null);
-    setLoadingAudioId(null);
-  };
-
-  // Play serene Krishna neural voice
-  const playKrishnaVoice = async (text: string, id: string) => {
-    if (!text || !text.trim()) return;
-
-    // If currently playing this same item, toggle pause
-    if (playingAudioId === id) {
-      stopKrishnaVoice();
-      return;
-    }
-
-    // Stop any existing speech
-    stopKrishnaVoice();
-    setLoadingAudioId(id);
-
-    try {
-      const cacheKey = `${language || 'auto'}:${text.trim().substring(0, 100)}`;
-      let audioUrl = audioCacheRef.current.get(cacheKey);
-
-      if (!audioUrl) {
-        const res = await fetch('/api/voice', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, language }),
-        });
-
-        if (!res.ok) {
-          throw new Error(`Voice synthesis failed: ${res.status}`);
-        }
-
-        const blob = await res.blob();
-        audioUrl = URL.createObjectURL(blob);
-        audioCacheRef.current.set(cacheKey, audioUrl);
-      }
-
-      setLoadingAudioId(null);
-      setPlayingAudioId(id);
-
-      const audio = new Audio(audioUrl);
-      audioPlayerRef.current = audio;
-
-      audio.onended = () => {
-        setPlayingAudioId(null);
-        audioPlayerRef.current = null;
-      };
-
-      audio.onerror = (e) => {
-        console.error('Audio playback error:', e);
-        setPlayingAudioId(null);
-        audioPlayerRef.current = null;
-      };
-
-      await audio.play();
-    } catch (err) {
-      console.error('Failed to synthesize or play Krishna voice:', err);
-      setLoadingAudioId(null);
-      setPlayingAudioId(null);
-      audioPlayerRef.current = null;
-    }
-  };
-
-  // Daily Wisdom selection & cleanup
+  // Daily Wisdom selection
   useEffect(() => {
     // Select a random powerful sloka on the client side only to avoid hydration mismatches
     const allSlokas: any[] = [];
@@ -408,16 +303,7 @@ export default function Home() {
       const randomIndex = rand % allSlokas.length;
       setDailySloka(allSlokas[randomIndex]);
     }
-
-    return () => {
-      stopKrishnaVoice();
-    };
   }, []);
-
-  // Stop current voice playback if chat changes or component unmounts
-  useEffect(() => {
-    stopKrishnaVoice();
-  }, [activeChatId]);
 
   const extractSanskritForCard = (content: string): string => {
     const devanagariRegex = /[\u0900-\u097F]/;
@@ -843,7 +729,6 @@ export default function Home() {
     setCustomContext('');
     setIsLanding(true);
     setShowDailyWisdom(true);
-    stopKrishnaVoice();
   };
 
   // Load existing chat
@@ -935,8 +820,6 @@ export default function Home() {
   const handleSend = async (text: string = input) => {
     if (!text.trim()) return;
 
-    stopKrishnaVoice();
-
     if (isLanding) setIsLanding(false);
 
     const userMessage: Message = { role: 'user', content: text };
@@ -1015,11 +898,6 @@ export default function Home() {
             saveChatLocally(activeIdToUse, prev, language || 'English', customContext);
             return prev;
           });
-        }
-
-        // Auto-play Krishna's peaceful voice if auto voice is enabled
-        if (autoVoiceRef.current && fullContent) {
-          playKrishnaVoice(fullContent, `msg-auto-${Date.now()}`);
         }
       }
 
@@ -1125,7 +1003,6 @@ export default function Home() {
                 setIsLanding(true);
                 setMessages([]);
                 setShowDailyWisdom(true);
-                stopKrishnaVoice();
               }}
             >
               <span className="logo-title">Gita-GPT</span>
@@ -1135,14 +1012,6 @@ export default function Home() {
           </div>
           
           <div className="header-right">
-            <button
-              onClick={toggleAutoVoice}
-              className={`music-toggle-btn auto-voice-btn ${autoVoiceEnabled ? 'playing' : ''}`}
-              title={autoVoiceEnabled ? "Krishna Voice Auto-speak: ON" : "Krishna Voice Auto-speak: OFF"}
-            >
-              <span>{autoVoiceEnabled ? '🎙️' : '🔈'}</span>
-              <span className="music-btn-text">{autoVoiceEnabled ? 'Voice: ON' : 'Auto Voice'}</span>
-            </button>
             <button
               onClick={() => setBgMusicPlaying(!bgMusicPlaying)}
               className={`music-toggle-btn ${bgMusicPlaying ? 'playing' : ''}`}
@@ -1209,33 +1078,84 @@ export default function Home() {
         {isLanding ? (
           <div className="landing">
             <div className="hero-image-wrapper">
-                {/* Floating Interactive Peacock Feather */}
+                {/* Enhanced Sacred Crown Peacock Feather (Mayur Pankh) directly on top of Krishna's Image */}
                 <div 
-                  className="floating-peacock-feather"
-                  title="Sacred Peacock Feather • Click to chime"
+                  className="hero-crown-feather"
+                  title="Lord Krishna's Divine Peacock Feather • Click for temple chime"
                   onClick={playTempleChime}
                 >
-                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-                    <path d="M32 4C24 16 12 30 18 46C22 56 34 60 42 54C52 46 54 28 42 16C38 12 34 7 32 4Z" fill="url(#featherGrad)" />
-                    <ellipse cx="32" cy="36" rx="9" ry="12" fill="url(#eyeGrad1)" />
-                    <ellipse cx="32" cy="37" rx="5" ry="7" fill="url(#eyeGrad2)" />
-                    <circle cx="32" cy="38" r="2.5" fill="#1e1b4b" />
-                    <path d="M32 4C31 22 26 44 14 58" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" />
+                  <div className="feather-halo-glow" />
+                  <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+                    {/* Outer radiant plume vanes */}
+                    <path 
+                      d="M50 8C35 24 16 45 22 72C26 88 44 98 56 94C72 88 84 65 74 38C68 24 58 14 50 8Z" 
+                      fill="url(#outerPlumeGrad)" 
+                      opacity="0.95"
+                    />
+                    
+                    {/* Fine barbules fan */}
+                    <path d="M50 12C38 28 24 46 28 68" stroke="url(#barbuleGrad)" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+                    <path d="M50 15C62 30 76 48 72 70" stroke="url(#barbuleGrad)" strokeWidth="1.2" strokeLinecap="round" opacity="0.8" />
+                    <path d="M50 25C32 40 22 58 26 76" stroke="url(#barbuleGrad)" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
+                    <path d="M50 25C68 40 78 58 74 76" stroke="url(#barbuleGrad)" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
+                    <path d="M50 38C36 50 28 66 32 82" stroke="url(#barbuleGrad)" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
+                    <path d="M50 38C64 50 72 66 68 82" stroke="url(#barbuleGrad)" strokeWidth="1" strokeLinecap="round" opacity="0.7" />
+                    
+                    {/* Peacock Eye (Ocellus) - Layer 1: Golden Amber Halo */}
+                    <ellipse cx="50" cy="58" rx="20" ry="25" fill="url(#eyeAmberGrad)" />
+                    
+                    {/* Peacock Eye - Layer 2: Emerald Teal Ring */}
+                    <ellipse cx="50" cy="60" rx="15" ry="19" fill="url(#eyeEmeraldGrad)" />
+                    
+                    {/* Peacock Eye - Layer 3: Vibrant Royal Blue Ring */}
+                    <ellipse cx="50" cy="62" rx="10.5" ry="13.5" fill="url(#eyeRoyalBlueGrad)" />
+                    
+                    {/* Peacock Eye - Layer 4: Deep Midnight Indigo Pupil */}
+                    <circle cx="50" cy="63.5" r="5.5" fill="#1e1b4b" />
+                    
+                    {/* Divine Celestial Light Reflection Highlight */}
+                    <ellipse cx="48" cy="61" rx="2" ry="1.4" fill="#ffffff" opacity="0.85" />
+                    <circle cx="53" cy="65" r="0.9" fill="#ffffff" opacity="0.65" />
+                    
+                    {/* Central Golden Spine / Shaft (Rachis) */}
+                    <path d="M50 8C49 35 46 75 36 112" stroke="url(#shaftGoldGrad)" strokeWidth="2.5" strokeLinecap="round" />
+                    <path d="M50 8C49 35 46 75 36 112" stroke="#ffffff" strokeWidth="0.8" strokeLinecap="round" opacity="0.6" />
+
                     <defs>
-                      <linearGradient id="featherGrad" x1="15" y1="5" x2="50" y2="60" gradientUnits="userSpaceOnUse">
+                      <linearGradient id="outerPlumeGrad" x1="20" y1="10" x2="80" y2="95" gradientUnits="userSpaceOnUse">
                         <stop stopColor="#0d9488" />
-                        <stop offset="0.5" stopColor="#0284c7" />
-                        <stop offset="0.85" stopColor="#312e81" />
+                        <stop offset="0.35" stopColor="#059669" />
+                        <stop offset="0.7" stopColor="#0284c7" />
+                        <stop offset="1" stopColor="#312e81" />
                       </linearGradient>
-                      <radialGradient id="eyeGrad1" cx="32" cy="36" r="12" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#f59e0b" />
-                        <stop offset="0.7" stopColor="#10b981" />
+                      <linearGradient id="barbuleGrad" x1="30" y1="10" x2="70" y2="80" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#fbbf24" />
+                        <stop offset="0.5" stopColor="#34d399" />
+                        <stop offset="1" stopColor="#38bdf8" />
+                      </linearGradient>
+                      <radialGradient id="eyeAmberGrad" cx="50" cy="58" r="25" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#fbbf24" />
+                        <stop offset="0.6" stopColor="#f59e0b" />
+                        <stop offset="0.85" stopColor="#b45309" />
+                        <stop offset="1" stopColor="#059669" />
+                      </radialGradient>
+                      <radialGradient id="eyeEmeraldGrad" cx="50" cy="60" r="19" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#10b981" />
+                        <stop offset="0.65" stopColor="#0d9488" />
                         <stop offset="1" stopColor="#0369a1" />
                       </radialGradient>
-                      <radialGradient id="eyeGrad2" cx="32" cy="37" r="7" gradientUnits="userSpaceOnUse">
-                        <stop stopColor="#6366f1" />
-                        <stop offset="0.8" stopColor="#1e1b4b" />
+                      <radialGradient id="eyeRoyalBlueGrad" cx="50" cy="62" r="13.5" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#38bdf8" />
+                        <stop offset="0.4" stopColor="#0284c7" />
+                        <stop offset="0.85" stopColor="#4338ca" />
+                        <stop offset="1" stopColor="#1e1b4b" />
                       </radialGradient>
+                      <linearGradient id="shaftGoldGrad" x1="50" y1="8" x2="36" y2="112" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#fef08a" />
+                        <stop offset="0.3" stopColor="#f59e0b" />
+                        <stop offset="0.8" stopColor="#d97706" />
+                        <stop offset="1" stopColor="#92400e" />
+                      </linearGradient>
                     </defs>
                   </svg>
                 </div>
@@ -1384,27 +1304,6 @@ export default function Home() {
                 </blockquote>
                 <div className="daily-sloka-actions">
                   <button
-                    onClick={() => playKrishnaVoice(language === 'Telugu' ? dailySloka.telugu : dailySloka.english, 'daily-sloka')}
-                    className={`daily-action-btn ${playingAudioId === 'daily-sloka' ? 'active' : ''}`}
-                    title="Listen to Krishna's serene voice"
-                    disabled={loadingAudioId === 'daily-sloka'}
-                  >
-                    {loadingAudioId === 'daily-sloka' ? (
-                      <><span className="btn-icon">⏳</span> <span className="btn-text">Preparing...</span></>
-                    ) : playingAudioId === 'daily-sloka' ? (
-                      <>
-                        <span className="audio-waves voice-waves">
-                          <span className="wave-bar bar-1"></span>
-                          <span className="wave-bar bar-2"></span>
-                          <span className="wave-bar bar-3"></span>
-                        </span>
-                        <span className="btn-text">Pause Voice</span>
-                      </>
-                    ) : (
-                      <><span className="btn-icon">🔊</span> <span className="btn-text">Listen Translation</span></>
-                    )}
-                  </button>
-                  <button
                     onClick={() => handleExportCard(
                       dailySloka.sanskrit, 
                       language === 'Telugu' ? dailySloka.telugu : dailySloka.english, 
@@ -1452,27 +1351,6 @@ export default function Home() {
                     </span>
                     {msg.role === 'bot' && (
                       <div className="message-actions">
-                        <button
-                          onClick={() => playKrishnaVoice(msg.content, `msg-${i}`)}
-                          className={`voice-btn ${playingAudioId === `msg-${i}` ? 'playing' : ''} ${loadingAudioId === `msg-${i}` ? 'loading' : ''}`}
-                          title={playingAudioId === `msg-${i}` ? "Pause Krishna's voice" : "Listen to Krishna's serene voice"}
-                          disabled={loadingAudioId === `msg-${i}`}
-                        >
-                          {loadingAudioId === `msg-${i}` ? (
-                            <><span className="btn-icon">⏳</span> <span className="btn-text">Reflecting...</span></>
-                          ) : playingAudioId === `msg-${i}` ? (
-                            <>
-                              <span className="audio-waves voice-waves">
-                                <span className="wave-bar bar-1"></span>
-                                <span className="wave-bar bar-2"></span>
-                                <span className="wave-bar bar-3"></span>
-                              </span>
-                              <span className="btn-text">Pause</span>
-                            </>
-                          ) : (
-                            <><span className="btn-icon">🔊</span> <span className="btn-text">Listen</span></>
-                          )}
-                        </button>
                         <button
                           onClick={() => {
                             const sanskrit = extractSanskritForCard(msg.content);
