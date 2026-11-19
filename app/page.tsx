@@ -1112,14 +1112,14 @@ export default function Home() {
                 className={`hero-lang-btn ${language === 'English' ? 'active' : ''}`}
                 onClick={() => setAndSaveLanguage('English')}
               >
-                <span>🇬🇧</span> English
+                English
               </button>
               <button
                 type="button"
                 className={`hero-lang-btn ${language === 'Telugu' ? 'active' : ''}`}
                 onClick={() => setAndSaveLanguage('Telugu')}
               >
-                <span>🇮🇳</span> తెలుగు (Telugu)
+                తెలుగు (Telugu)
               </button>
             </div>
 
