@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import gitaData from '@/lib/gita-data.json';
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -18,7 +18,7 @@ export default function Home() {
   const [input, setInput] = useState('');
   const [isLanding, setIsLanding] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
-  const [language, setLanguage] = useState<'English' | 'Telugu' | null>(null);
+  const [language, setLanguage] = useState<'English' | 'Telugu'>('English');
   const [customContext, setCustomContext] = useState('');
   const [showContextInput, setShowContextInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -34,6 +34,29 @@ export default function Home() {
   const autoVoiceRef = useRef<boolean>(false);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
   const audioCacheRef = useRef<Map<string, string>>(new Map());
+
+  // Divine Sanctuary: Particles, Chime & Shifting Quotes
+  const particleCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const chimeTriggeredRef = useRef<boolean>(false);
+  const [quoteIndex, setQuoteIndex] = useState(0);
+  const [quoteFading, setQuoteFading] = useState(false);
+
+  // Shifting Divine Quotes (English & Telugu)
+  const divineQuotes = useMemo(() => {
+    return language === 'Telugu' ? [
+      "నీ ఆత్మలో సందేహం కలిగినప్పుడల్లా, నేను నీతోనే ఉన్నాను.",
+      "కర్మ చేయడమే నీ హక్కు, ఫలితంపై నీకు అధికారం లేదు.",
+      "శాంతి అంతరంగం నుండే ఉద్భవిస్తుంది. దానిని బయట వెతకకు.",
+      "మనిషి తన స్వంత మనస్సు ద్వారానే ఉన్నత స్థాయికి ఎదగగలడు.",
+      "ఆత్మకు పుట్టుక లేదు, మరణం అంతకంటే లేదు."
+    ] : [
+      "Whenever doubt shakes your spirit, I am here.",
+      "You have a right to perform your duty, but not to the fruits of action.",
+      "Peace comes from within. Do not seek it without.",
+      "A person can rise through the efforts of their own mind.",
+      "The soul is neither born, nor does it ever die."
+    ];
+  }, [language]);
 
   // Database Chat State
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -82,6 +105,184 @@ export default function Home() {
       textareaRef.current.style.height = `${targetHeight}px`;
     }
   }, [input]);
+
+  // Restore language preference from localStorage
+  useEffect(() => {
+    try {
+      const savedLang = localStorage.getItem('gita_preferred_language');
+      if (savedLang === 'English' || savedLang === 'Telugu') {
+        setLanguage(savedLang);
+      }
+    } catch {}
+  }, []);
+
+  const setAndSaveLanguage = (lang: 'English' | 'Telugu') => {
+    setLanguage(lang);
+    try {
+      localStorage.setItem('gita_preferred_language', lang);
+    } catch {}
+  };
+
+  // Sacred brass temple bell chime (Web Audio API synthesis - 432 Hz divine harmonics)
+  const playTempleChime = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContextClass) return;
+      const ctx = new AudioContextClass();
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+      const now = ctx.currentTime;
+      // Sacred 432Hz fundamental + Tibetan bowl bronze harmonics
+      const freqs = [432, 864, 1296, 1728];
+      const gains = [0.12, 0.06, 0.03, 0.015];
+      freqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.998, now + 3.2);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(gains[i], now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 3.2);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 3.3);
+      });
+    } catch {}
+  }, []);
+
+  // Ambient chime on first interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!chimeTriggeredRef.current) {
+        chimeTriggeredRef.current = true;
+        playTempleChime();
+      }
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+
+    window.addEventListener('pointerdown', handleFirstInteraction, { once: true });
+    window.addEventListener('keydown', handleFirstInteraction, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+      window.removeEventListener('keydown', handleFirstInteraction);
+    };
+  }, [playTempleChime]);
+
+  // Shifting Divine Quote (shifts every 6 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setQuoteFading(true);
+      setTimeout(() => {
+        setQuoteIndex((prev) => (prev + 1) % divineQuotes.length);
+        setQuoteFading(false);
+      }, 400);
+    }, 6000);
+
+    return () => clearInterval(timer);
+  }, [divineQuotes.length]);
+
+  // Golden Celestial Particle Dust Canvas (Reacts to Mouse Movements)
+  useEffect(() => {
+    const canvas = particleCanvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const mouse = { x: -1000, y: -1000 };
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const particleCount = 55;
+    const colors = [
+      'rgba(245, 176, 39, ',  // Rich Gold
+      'rgba(251, 191, 36, ',  // Bright Gold
+      'rgba(254, 240, 138, ', // Pale Celestial Light
+      'rgba(45, 212, 191, ',  // Soft Peacock Cyan
+    ];
+
+    const particles = Array.from({ length: particleCount }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      radius: Math.random() * 2 + 0.8,
+      baseAlpha: Math.random() * 0.45 + 0.2,
+      alpha: 0.3,
+      speedX: (Math.random() - 0.5) * 0.35,
+      speedY: -Math.random() * 0.45 - 0.12,
+      pulse: Math.random() * Math.PI * 2,
+      pulseSpeed: Math.random() * 0.03 + 0.01,
+      color: colors[Math.floor(Math.random() * colors.length)],
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.pulse += p.pulseSpeed;
+        p.alpha = p.baseAlpha + Math.sin(p.pulse) * 0.18;
+
+        p.x += p.speedX;
+        p.y += p.speedY;
+
+        // Subtle interactive mouse repulsion / wafting
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 130 && dist > 0) {
+          const force = (130 - dist) / 130;
+          p.x -= (dx / dist) * force * 1.6;
+          p.y -= (dy / dist) * force * 1.6;
+        }
+
+        // Boundary wrap
+        if (p.y < -10) {
+          p.y = height + 10;
+          p.x = Math.random() * width;
+        }
+        if (p.x < -10) p.x = width + 10;
+        if (p.x > width + 10) p.x = -10;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `${p.color}${Math.max(0, Math.min(1, p.alpha))})`;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(245, 176, 39, 0.4)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
 
   // Sync autoVoiceRef with state and restore preference from localStorage
   useEffect(() => {
@@ -639,10 +840,10 @@ export default function Home() {
   const startNewChat = () => {
     setMessages([]);
     setActiveChatId(null);
-    setLanguage(null);
     setCustomContext('');
     setIsLanding(true);
     setShowDailyWisdom(true);
+    stopKrishnaVoice();
   };
 
   // Load existing chat
@@ -835,6 +1036,18 @@ export default function Home() {
     }
   };
 
+  const trendingDilemmas = language === 'Telugu' ? [
+    { icon: "🌪️", label: "అశాంతి & భయాందోళన", query: "నా మనస్సు చాలా చంచలంగా, అశాంతిగా ఉంది. మనస్సును ఎలా ప్రశాంతపరచుకోవాలో భగవద్గీత ద్వారా వివరించండి." },
+    { icon: "⚔️", label: "గత తప్పుల గిల్ట్", query: "గతంలో జరిగిన నిర్ణయాలు నన్ను నిరంతరం బాధపెడుతున్నాయి. గతం నుండి విముక్తి పొందడానికి కృష్ణుడు ఏమి చెబుతున్నాడు?" },
+    { icon: "⚖️", label: "కర్మ & నిష్కామ కర్మ", query: "భగవద్గీతలోని నిష్కామ కర్మ సిద్ధాంతాన్ని సులభమైన మాటల్లో వివరించండి." },
+    { icon: "🕊️", label: "జీవిత కర్తవ్యం (ధర్మం)", query: "జీవితంలో కష్టాలు ఎదురైనప్పుడు సరైన ధర్మ మార్గాన్ని ఎలా ఎంచుకోవాలి?" },
+  ] : [
+    { icon: "🌪️", label: "Anxiety & Restless Mind", query: "I feel very overwhelmed and my mind is constantly restless. How does Krishna advise to calm the mind?" },
+    { icon: "⚔️", label: "Regret & Past Guilt", query: "I cannot stop feeling guilty about past mistakes and decisions. How can the Gita help me let go?" },
+    { icon: "⚖️", label: "Karma & Detachment", query: "Explain the core teaching of Karma Yoga and detachment from Bhagavad Gita in simple words." },
+    { icon: "🕊️", label: "Life Purpose & Dharma", query: "How do I discover my true purpose and duty (Dharma) when everything feels confusing?" },
+  ];
+
   const suggestions = [
     { title: "Seek Guidance", desc: "I am feeling very stressed and anxious about my career.", icon: "🧘" },
     { title: "Retrieve Sloka", desc: "Show me Chapter 2 Sloka 47 and its meaning.", icon: "📖" },
@@ -851,6 +1064,7 @@ export default function Home() {
       <div className="bg-ambient-orb-warm" aria-hidden="true"></div>
       <div className="bg-ambient-orb-cyan" aria-hidden="true"></div>
       <div className="bg-grid" aria-hidden="true"></div>
+      <canvas ref={particleCanvasRef} className="divine-particle-canvas" aria-hidden="true" />
 
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
@@ -908,7 +1122,6 @@ export default function Home() {
             <div 
               className="logo" 
               onClick={() => {
-                setLanguage(null);
                 setIsLanding(true);
                 setMessages([]);
                 setShowDailyWisdom(true);
@@ -993,9 +1206,40 @@ export default function Home() {
           </div>
         </header>
 
-        {!language ? (
+        {isLanding ? (
           <div className="landing">
             <div className="hero-image-wrapper">
+                {/* Floating Interactive Peacock Feather */}
+                <div 
+                  className="floating-peacock-feather"
+                  title="Sacred Peacock Feather • Click to chime"
+                  onClick={playTempleChime}
+                >
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+                    <path d="M32 4C24 16 12 30 18 46C22 56 34 60 42 54C52 46 54 28 42 16C38 12 34 7 32 4Z" fill="url(#featherGrad)" />
+                    <ellipse cx="32" cy="36" rx="9" ry="12" fill="url(#eyeGrad1)" />
+                    <ellipse cx="32" cy="37" rx="5" ry="7" fill="url(#eyeGrad2)" />
+                    <circle cx="32" cy="38" r="2.5" fill="#1e1b4b" />
+                    <path d="M32 4C31 22 26 44 14 58" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" />
+                    <defs>
+                      <linearGradient id="featherGrad" x1="15" y1="5" x2="50" y2="60" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#0d9488" />
+                        <stop offset="0.5" stopColor="#0284c7" />
+                        <stop offset="0.85" stopColor="#312e81" />
+                      </linearGradient>
+                      <radialGradient id="eyeGrad1" cx="32" cy="36" r="12" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#f59e0b" />
+                        <stop offset="0.7" stopColor="#10b981" />
+                        <stop offset="1" stopColor="#0369a1" />
+                      </radialGradient>
+                      <radialGradient id="eyeGrad2" cx="32" cy="37" r="7" gradientUnits="userSpaceOnUse">
+                        <stop stopColor="#6366f1" />
+                        <stop offset="0.8" stopColor="#1e1b4b" />
+                      </radialGradient>
+                    </defs>
+                  </svg>
+                </div>
+
                 <Image 
                     src="/images/krishna_hero.png" 
                     alt="Lord Krishna" 
@@ -1005,32 +1249,100 @@ export default function Home() {
                     priority
                 />
             </div>
-            <h1>Choose Your Language</h1>
-            <p>Select the language in which you wish to explore the divine wisdom of the Bhagavad Gita.</p>
-            
-            <div className="language-selector suggestions">
-              <div className="suggestion-card" onClick={() => { setLanguage('English'); setShowDailyWisdom(true); }}>
-                <h3 style={{ textAlign: 'center', fontSize: '1.2rem', justifyContent: 'center' }}>English</h3>
-              </div>
-              <div className="suggestion-card" onClick={() => { setLanguage('Telugu'); setShowDailyWisdom(true); }}>
-                <h3 style={{ textAlign: 'center', fontSize: '1.2rem', justifyContent: 'center' }}>తెలుగు (Telugu)</h3>
-              </div>
+
+            {/* Seamless Language Switcher Pill */}
+            <div className="hero-language-switch">
+              <button
+                type="button"
+                className={`hero-lang-btn ${language === 'English' ? 'active' : ''}`}
+                onClick={() => setAndSaveLanguage('English')}
+              >
+                <span>🇬🇧</span> English
+              </button>
+              <button
+                type="button"
+                className={`hero-lang-btn ${language === 'Telugu' ? 'active' : ''}`}
+                onClick={() => setAndSaveLanguage('Telugu')}
+              >
+                <span>🇮🇳</span> తెలుగు (Telugu)
+              </button>
             </div>
-          </div>
-        ) : isLanding ? (
-          <div className="landing">
-            <div className="hero-image-wrapper">
-                <Image 
-                    src="/images/krishna_hero.png" 
-                    alt="Lord Krishna" 
-                    fill 
-                    sizes="(max-width: 768px) 130px, 200px"
-                    className="hero-image"
-                    priority
+
+            {/* Interactive 6-Second Shifting Divine Quote */}
+            <div 
+              className="divine-quote-container" 
+              onClick={() => {
+                playTempleChime();
+                setQuoteFading(true);
+                setTimeout(() => {
+                  setQuoteIndex((prev) => (prev + 1) % divineQuotes.length);
+                  setQuoteFading(false);
+                }, 300);
+              }}
+              title="Click to hear temple bell & shift to next divine teaching"
+            >
+              <p className={`divine-shifting-quote ${quoteFading ? 'fade-out' : 'fade-in'}`}>
+                “{divineQuotes[quoteIndex] || divineQuotes[0]}”
+              </p>
+              <span className="divine-quote-hint">🪈 Sri Krishna • shifts every 6s</span>
+            </div>
+
+            <h1>{language === 'Telugu' ? "స్వాగతం, సాధకా" : "Divine Wisdom for Life's Dilemmas"}</h1>
+            <p>
+              {language === 'Telugu' 
+                ? "మీ జీవితంలోని సందేహాలు, ఆందోళనలు మరియు కర్తవ్య సంక్షోభాలకు భగవద్గీత ద్వారా పరమ శాంతిని పొందండి." 
+                : "Seek timeless clarity from Lord Krishna for your career, relationships, inner peace, and life purpose."}
+            </p>
+
+            {/* Instant Divine Consultation Search Bar */}
+            <div className="hero-consultation-container">
+              <div className="hero-consultation-box">
+                <span className="consultation-icon">🪈</span>
+                <input 
+                  type="text"
+                  className="hero-consultation-input"
+                  placeholder={language === 'Telugu' 
+                    ? "మీ మనస్సును కలవరపెడుతున్న విషయాన్ని కృష్ణుడిని అడగండి..." 
+                    : "Ask Krishna what is weighing on your soul today..."}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
                 />
+                <button 
+                  className="hero-consultation-btn"
+                  onClick={() => handleSend()}
+                  disabled={!input.trim()}
+                  title="Ask Krishna"
+                >
+                  <span className="btn-text">{language === 'Telugu' ? "సలహా కోరండి" : "Ask Krishna"}</span>
+                  <span className="btn-arrow">✨</span>
+                </button>
+              </div>
             </div>
-            <h1>Welcome, Seeker</h1>
-            <p>Explore the eternal wisdom of the Bhagavad Gita. Seek guidance for life's challenges or find specific verses to illuminate your path.</p>
+
+            {/* Trending Divine Dilemmas (1-Click Chips) */}
+            <div className="hero-trending-section">
+              <span className="trending-label">
+                💡 {language === 'Telugu' ? "సాధారణ ఆధ్యాత్మిక సందేహాలు:" : "Trending Divine Dilemmas:"}
+              </span>
+              <div className="trending-chips-wrap">
+                {trendingDilemmas.map((d, idx) => (
+                  <button 
+                    key={idx}
+                    className="trending-chip"
+                    onClick={() => handleSend(d.query)}
+                  >
+                    <span className="chip-icon">{d.icon}</span>
+                    <span className="chip-text">{d.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
             
             {status !== 'loading' && !session && (
               <div className="auth-backup-banner">
